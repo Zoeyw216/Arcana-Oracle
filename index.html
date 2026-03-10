@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcana Oracle - 塔罗占卜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/cards.css">
+<link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+
+<!-- Stars background -->
+<div class="stars" id="stars"></div>
+
+<!-- Hand cursor (for gesture tracking) -->
+<div class="hand-cursor" id="handCursor">
+  <div class="hand-cursor-inner"></div>
+</div>
+
+<!-- Main container -->
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="oracle-icon">
+      <svg width="68" height="68" viewBox="0 0 68 68">
+        <defs>
+          <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#c4b49a"/>
+            <stop offset="100%" style="stop-color:#9b8b74"/>
+          </linearGradient>
+        </defs>
+        <!-- Crescent moon -->
+        <circle cx="30" cy="34" r="18" fill="none" stroke="url(#moonGrad)" stroke-width="1.5" opacity="0.75"/>
+        <circle cx="37" cy="30" r="15" fill="#f7f4ef" stroke="none"/>
+        <!-- Star nestled in crescent -->
+        <polygon points="42,30 43.8,35 49,35.5 45,38.8 46.2,44 42,41 37.8,44 39,38.8 35,35.5 40.2,35" fill="url(#moonGrad)" opacity="0.65"/>
+        <!-- Tiny scattered stars -->
+        <circle cx="20" cy="16" r="1" fill="#b3a08a" opacity="0.45"/>
+        <circle cx="54" cy="22" r="0.8" fill="#b3a08a" opacity="0.35"/>
+        <circle cx="14" cy="44" r="0.8" fill="#b3a08a" opacity="0.3"/>
+        <circle cx="50" cy="48" r="1" fill="#b3a08a" opacity="0.35"/>
+        <circle cx="34" cy="12" r="0.7" fill="#b3a08a" opacity="0.3"/>
+        <circle cx="58" cy="36" r="0.7" fill="#b3a08a" opacity="0.25"/>
+      </svg>
+    </div>
+    <h1>Arcana Oracle</h1>
+    <div class="subtitle">塔 罗 占 卜</div>
+  </div>
+
+  <!-- Question -->
+  <div class="question-section" id="questionSection">
+    <label class="question-label">在心中默念你的问题</label>
+    <input type="text" class="question-input" id="questionInput"
+           placeholder="输入你想问的事情..." maxlength="100" autocomplete="off">
+  </div>
+
+  <!-- Draw button -->
+  <button class="draw-btn" id="drawBtn">开 始 抽 牌</button>
+
+  <!-- Deck area (3D floating cards) -->
+  <div class="deck-area" id="deckArea"></div>
+  <div class="deck-hint" id="deckHint"></div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+    <div class="results-title" id="resultsTitle"></div>
+    <div class="cards-row" id="cardsRow"></div>
+    <div class="interpretation" id="interpretation"></div>
+    <button class="reset-btn" id="resetBtn">重新占卜</button>
+  </div>
+</div>
+
+<!-- Interaction mode modal -->
+<div class="mode-modal" id="modeModal">
+  <div class="mode-modal-content">
+    <h3>选择交互方式</h3>
+    <p>开启摄像头，用手势抓取塔罗牌，体验更沉浸的占卜</p>
+    <div class="mode-buttons">
+      <button class="mode-btn primary" id="enableCamera">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        启用手势追踪
+      </button>
+      <button class="mode-btn" id="useClick">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2L12 8M12 8L8 5M12 8L16 5"/>
+          <rect x="8" y="10" width="8" height="10" rx="1"/>
+        </svg>
+        使用点击操控
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Camera preview (small PiP) -->
+<div class="camera-pip" id="cameraPip">
+  <video id="cameraPreview" autoplay playsinline muted></video>
+</div>
+
+<!-- Hand tracking loading indicator -->
+<div class="hand-loading" id="handLoadingIndicator">
+  <div class="hand-loading-spinner"></div>
+  <span>加载手势识别模型...</span>
+</div>
+
+<footer style="position:fixed;bottom:12px;right:18px;font-family:'Cormorant Garamond',serif;font-size:0.78em;color:var(--text-secondary,#8d96a0);letter-spacing:2px;opacity:0.5;z-index:10;">Made by Zoey Wang</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,814 @@
+/* ============================================================
+   ARCANA ORACLE - Card Styles
+   Card-specific 3D transforms, states, and visual treatments
+   Art Nouveau inspired mystical card design
+   ============================================================ */
+
+
+/* ============================================================
+   CARD CONTAINER (Perspective Wrapper)
+   ============================================================ */
+
+.card-container {
+  perspective: 1000px;
+  perspective-origin: center center;
+  display: inline-block;
+  position: relative;
+}
+
+
+/* ============================================================
+   CARD WRAPPER (Layout)
+   ============================================================ */
+
+.card-wrapper {
+  perspective: 800px;
+  width: 180px;
+  text-align: center;
+  position: relative;
+}
+
+
+/* ============================================================
+   POSITION LABELS (Past / Present / Future)
+   ============================================================ */
+
+.card-label {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 0.88em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  letter-spacing: 3px;
+  position: relative;
+  display: inline-block;
+}
+
+/* Decorative dots flanking the label */
+.card-label::before,
+.card-label::after {
+  content: '\2726'; /* decorative star */
+  font-size: 0.6em;
+  vertical-align: middle;
+  margin: 0 8px;
+  opacity: 0.5;
+}
+
+/* Specific position label accents */
+.card-label--past {
+  color: #7a8aa0;
+}
+
+.card-label--present {
+  color: #c9a24e;
+  font-weight: 600;
+}
+
+.card-label--future {
+  color: #9a7ab0;
+}
+
+
+/* ============================================================
+   FLOATING CARD (Base Card Element)
+   ============================================================ */
+
+.floating-card {
+  width: 80px;
+  height: 124px;
+  position: absolute;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.floating-card:hover {
+  filter: brightness(1.15);
+}
+
+.floating-card.picked {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease-out;
+}
+
+
+/* ============================================================
+   CARD FLIP MECHANISM
+   ============================================================ */
+
+.card-flip {
+  width: 180px;
+  height: 300px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: default;
+}
+
+.card-flip.flipped {
+  transform: rotateY(180deg);
+}
+
+/* Slight vertical float after flip */
+.card-flip.flipped.settled {
+  animation: float 5s ease-in-out infinite;
+}
+
+
+/* ============================================================
+   CARD FACES (Front & Back)
+   ============================================================ */
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+
+/* --- Card Front (Face-down / Reverse side) --- */
+
+.card-front {
+  background: linear-gradient(
+    135deg,
+    #f5f0e4 0%,
+    #ebe4d4 25%,
+    #f0ead8 50%,
+    #ebe4d4 75%,
+    #f5f0e4 100%
+  );
+  border: 2px solid rgba(166, 136, 56, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 0 30px rgba(166, 136, 56, 0.04),
+    0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-front .card-back-design {
+  width: 150px;
+  height: 270px;
+  border: 1px solid rgba(166, 136, 56, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3em;
+  color: rgba(166, 136, 56, 0.3);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(166, 136, 56, 0.06),
+    transparent
+  );
+  position: relative;
+}
+
+/* Art Nouveau ornamental pattern on card back */
+.card-front .card-back-design::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(201, 162, 78, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(201, 162, 78, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Corner filigree marks */
+.card-front .card-back-design::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  border: 1px solid rgba(201, 162, 78, 0.08);
+  border-radius: 6px;
+}
+
+
+/* --- Card Back (Face-up / Revealed side) --- */
+
+.card-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(
+    160deg,
+    #faf7f0 0%,
+    #f5f0e4 30%,
+    #f0ead8 50%,
+    #f5f0e4 70%,
+    #faf7f0 100%
+  );
+  border: 2px solid var(--gold-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  box-shadow:
+    inset 0 0 40px rgba(166, 136, 56, 0.04),
+    0 4px 20px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+/* Inner decorative frame on revealed card */
+.card-back::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px solid rgba(201, 162, 78, 0.15);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+/* Subtle radial light from center */
+.card-back::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(201, 162, 78, 0.04) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+
+/* --- Card Back Reveal (face-up side after flip) --- */
+
+.card-back-reveal {
+  transform: rotateY(180deg);
+}
+
+
+/* ============================================================
+   CARD CONTENT ELEMENTS
+   ============================================================ */
+
+.card-numeral {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.75em;
+  color: var(--text-secondary);
+  letter-spacing: 3px;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.card-symbol {
+  font-size: 3.5em;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 12px rgba(245, 215, 142, 0.3));
+  position: relative;
+  z-index: 1;
+  transition: filter 0.3s ease;
+}
+
+/* Reversed card symbol rotation */
+.card-symbol--reversed {
+  transform: rotate(180deg);
+}
+
+.card-name {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.05em;
+  color: var(--gold-dark);
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-bottom: 2px;
+  position: relative;
+  z-index: 1;
+  text-shadow: none;
+}
+
+.card-name-en {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.72em;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  font-style: italic;
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ============================================================
+   UPRIGHT / REVERSED BADGES
+   ============================================================ */
+
+.card-direction {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 0.75em;
+  padding: 3px 14px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.card-direction.upright {
+  background: rgba(100, 200, 120, 0.12);
+  color: #7ecf8e;
+  border: 1px solid rgba(100, 200, 120, 0.2);
+}
+
+.card-direction.reversed {
+  background: rgba(200, 100, 100, 0.12);
+  color: #cf7e7e;
+  border: 1px solid rgba(200, 100, 100, 0.2);
+}
+
+/* Pulsing dot indicator */
+.card-direction::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.card-direction.upright::before {
+  background: #7ecf8e;
+  box-shadow: 0 0 6px rgba(100, 200, 120, 0.5);
+}
+
+.card-direction.reversed::before {
+  background: #cf7e7e;
+  box-shadow: 0 0 6px rgba(200, 100, 100, 0.5);
+}
+
+
+/* ============================================================
+   CARD KEYWORD TEXT
+   ============================================================ */
+
+.card-keyword {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 0.7em;
+  color: #b8a580;
+  text-align: center;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+  max-width: 90%;
+}
+
+/* Decorative line above keywords */
+.card-keyword::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 78, 0.3), transparent);
+  margin: 0 auto 6px;
+}
+
+
+/* ============================================================
+   CARD BORDER / FRAME STYLING
+   ============================================================ */
+
+.card-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Art Nouveau style ornamental border overlay */
+.card-frame::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 1px solid rgba(201, 162, 78, 0.12);
+  border-radius: 11px;
+}
+
+/* Corner accent marks */
+.card-frame--ornate::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 1px solid rgba(201, 162, 78, 0.06);
+  border-radius: 8px;
+}
+
+
+/* ============================================================
+   CARD HOVER EFFECTS (Glow + Lift)
+   ============================================================ */
+
+.card-flip:hover {
+  filter: brightness(1.05);
+}
+
+.card-flip.flipped:hover .card-back {
+  box-shadow:
+    inset 0 0 40px rgba(201, 162, 78, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(201, 162, 78, 0.12);
+}
+
+.card-flip.flipped:hover .card-symbol {
+  filter: drop-shadow(0 0 16px rgba(245, 215, 142, 0.5));
+}
+
+/* Hover lift effect for card wrapper */
+.card-wrapper:hover .card-flip.flipped {
+  transform: rotateY(180deg) translateY(-4px);
+}
+
+
+/* ============================================================
+   HAND-HOVER STATE (Gesture interaction)
+   ============================================================ */
+
+.hand-hover .card-back,
+.card-flip.hand-hover .card-back {
+  border-color: var(--gold-primary);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 0 24px rgba(166, 136, 56, 0.15);
+}
+
+.hand-hover .card-front,
+.card-flip.hand-hover .card-front {
+  border-color: var(--gold-primary);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 0 24px rgba(166, 136, 56, 0.1);
+}
+
+.hand-hover .card-symbol {
+  filter: drop-shadow(0 0 20px rgba(245, 215, 142, 0.6));
+}
+
+.hand-hover .card-name {
+  text-shadow: 0 0 16px rgba(245, 215, 142, 0.4);
+}
+
+/* Deck cards with hand hover */
+.deck-card.hand-hover {
+  border-color: #f5d78e !important;
+  box-shadow:
+    0 18px 50px rgba(201, 162, 78, 0.35),
+    0 0 40px rgba(245, 215, 142, 0.15) !important;
+  transform: translateY(-20px) !important;
+}
+
+.deck-card.hand-hover .card-back-pattern {
+  color: #f5d78e;
+  border-color: rgba(245, 215, 142, 0.4);
+  text-shadow: 0 0 12px rgba(245, 215, 142, 0.5);
+}
+
+
+/* ============================================================
+   CARD-SELECTED STATE (Pulsing Gold Border)
+   ============================================================ */
+
+.card-selected,
+.card-flip.card-selected .card-back {
+  border-color: #f5d78e;
+  animation: cardGlow 2s ease-in-out infinite;
+}
+
+.card-selected .card-name {
+  text-shadow: 0 0 12px rgba(245, 215, 142, 0.3);
+}
+
+.card-selected .card-symbol {
+  filter: drop-shadow(0 0 18px rgba(245, 215, 142, 0.5));
+}
+
+/* Outer glow ring for selected card */
+.card-wrapper.card-selected::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 1px solid rgba(245, 215, 142, 0.2);
+  border-radius: 18px;
+  animation: cardGlow 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+
+/* ============================================================
+   CARD FLIP ANIMATION CLASSES
+   ============================================================ */
+
+/* Delayed flip classes for staggered reveals */
+.card-flip--delay-1 {
+  transition-delay: 0.1s;
+}
+
+.card-flip--delay-2 {
+  transition-delay: 0.3s;
+}
+
+.card-flip--delay-3 {
+  transition-delay: 0.5s;
+}
+
+/* Flip with wobble */
+.card-flip--dramatic {
+  transition: transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Entry animation for cards before flip */
+.card-flip--enter {
+  opacity: 0;
+  transform: translateY(30px) scale(0.9);
+  animation: cardEnter 0.6s ease-out forwards;
+}
+
+@keyframes cardEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* ============================================================
+   READING POSITION CARD STYLES
+   ============================================================ */
+
+/* Slightly larger for focused reading view */
+.card-wrapper--reading {
+  width: 200px;
+}
+
+.card-wrapper--reading .card-flip {
+  width: 200px;
+  height: 330px;
+}
+
+.card-wrapper--reading .card-front .card-back-design {
+  width: 170px;
+  height: 300px;
+}
+
+.card-wrapper--reading .card-symbol {
+  font-size: 4em;
+}
+
+.card-wrapper--reading .card-name {
+  font-size: 1.15em;
+  letter-spacing: 4px;
+}
+
+.card-wrapper--reading .card-name-en {
+  font-size: 0.78em;
+}
+
+/* Single card (centered, prominent) */
+.card-wrapper--single {
+  width: 220px;
+}
+
+.card-wrapper--single .card-flip {
+  width: 220px;
+  height: 360px;
+}
+
+.card-wrapper--single .card-back {
+  padding: 20px 16px;
+}
+
+.card-wrapper--single .card-front .card-back-design {
+  width: 190px;
+  height: 330px;
+  font-size: 3.5em;
+}
+
+.card-wrapper--single .card-symbol {
+  font-size: 4.5em;
+  margin-bottom: 14px;
+}
+
+.card-wrapper--single .card-name {
+  font-size: 1.25em;
+}
+
+.card-wrapper--single .card-keyword {
+  font-size: 0.78em;
+}
+
+
+/* ============================================================
+   CARD SPREAD LAYOUTS
+   ============================================================ */
+
+/* Three-card spread with position emphasis */
+.cards-row--three-spread {
+  align-items: flex-end;
+}
+
+.cards-row--three-spread .card-wrapper:nth-child(2) {
+  transform: translateY(-12px);
+}
+
+.cards-row--three-spread .card-wrapper:nth-child(2) .card-label {
+  color: #c9a24e;
+  font-weight: 600;
+}
+
+/* Celtic cross and larger spread containers */
+.cards-row--cross {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, auto);
+  gap: 20px;
+  max-width: 600px;
+  margin: 0 auto 40px;
+}
+
+
+/* ============================================================
+   CARD BACK DESIGN VARIATIONS
+   ============================================================ */
+
+/* Celestial pattern */
+.card-back-design--celestial {
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(100, 80, 180, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 70%, rgba(180, 120, 60, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at center, rgba(201, 162, 78, 0.05) 0%, transparent 70%) !important;
+}
+
+/* Sacred geometry pattern */
+.card-back-design--geometric {
+  background:
+    conic-gradient(from 0deg at 50% 50%, transparent, rgba(201, 162, 78, 0.03), transparent, rgba(201, 162, 78, 0.03), transparent) !important;
+}
+
+
+/* ============================================================
+   RESPONSIVE CARD ADJUSTMENTS
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .card-wrapper {
+    width: 160px;
+  }
+
+  .card-flip {
+    width: 160px;
+    height: 270px;
+  }
+
+  .card-front .card-back-design {
+    width: 132px;
+    height: 242px;
+    font-size: 2.5em;
+  }
+
+  .card-symbol {
+    font-size: 3em;
+  }
+
+  .card-name {
+    font-size: 0.95em;
+    letter-spacing: 2px;
+  }
+
+  .card-name-en {
+    font-size: 0.65em;
+  }
+
+  .card-direction {
+    font-size: 0.7em;
+    padding: 2px 10px;
+  }
+
+  .card-keyword {
+    font-size: 0.65em;
+  }
+
+  .card-label {
+    font-size: 0.8em;
+    letter-spacing: 2px;
+  }
+
+  .card-wrapper--reading {
+    width: 170px;
+  }
+
+  .card-wrapper--reading .card-flip {
+    width: 170px;
+    height: 285px;
+  }
+
+  .card-wrapper--single {
+    width: 190px;
+  }
+
+  .card-wrapper--single .card-flip {
+    width: 190px;
+    height: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-wrapper {
+    width: 150px;
+  }
+
+  .card-flip {
+    width: 150px;
+    height: 260px;
+  }
+
+  .card-front .card-back-design {
+    width: 122px;
+    height: 232px;
+    font-size: 2.2em;
+  }
+
+  .card-back {
+    padding: 12px 10px;
+  }
+
+  .card-symbol {
+    font-size: 2.8em;
+    margin-bottom: 6px;
+  }
+
+  .card-name {
+    font-size: 0.88em;
+    letter-spacing: 1px;
+  }
+
+  .card-name-en {
+    font-size: 0.6em;
+    margin-bottom: 6px;
+  }
+
+  .card-numeral {
+    font-size: 0.65em;
+  }
+
+  .card-keyword {
+    font-size: 0.6em;
+    line-height: 1.5;
+  }
+
+  .card-label::before,
+  .card-label::after {
+    display: none;
+  }
+
+  .card-wrapper--single {
+    width: 170px;
+  }
+
+  .card-wrapper--single .card-flip {
+    width: 170px;
+    height: 290px;
+  }
+
+  .card-wrapper--single .card-symbol {
+    font-size: 3.5em;
+  }
+
+  .cards-row--three-spread .card-wrapper:nth-child(2) {
+    transform: translateY(-6px);
+  }
+}

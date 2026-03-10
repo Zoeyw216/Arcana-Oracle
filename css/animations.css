@@ -1,0 +1,963 @@
+/* ============================================================
+   ARCANA ORACLE - Animations & Transitions
+   All keyframe animations, transition utilities, and motion
+   Art Nouveau inspired mystical motion design
+   ============================================================ */
+
+
+/* ============================================================
+   @KEYFRAMES - STAR TWINKLING
+   Subtle brightness pulse for background stars
+   ============================================================ */
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Variant: slower, softer twinkle for large stars */
+@keyframes twinkleSoft {
+  0%, 100% {
+    opacity: 0.3;
+    filter: blur(0px);
+  }
+  40% {
+    opacity: 0.8;
+    filter: blur(0.5px);
+  }
+  60% {
+    opacity: 0.9;
+    filter: blur(0.5px);
+  }
+}
+
+/* Variant: bright flash twinkle */
+@keyframes twinkleBright {
+  0%, 80%, 100% {
+    opacity: 0.1;
+  }
+  85% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  95% {
+    opacity: 0.8;
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - FLOAT
+   Generic floating / levitation for cards and icons
+   ============================================================ */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Variant: wider, slower float */
+@keyframes floatWide {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-6px) translateX(3px);
+  }
+  50% {
+    transform: translateY(-12px) translateX(0);
+  }
+  75% {
+    transform: translateY(-6px) translateX(-3px);
+  }
+}
+
+/* Variant: gentle rotation with float */
+@keyframes floatRotate {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(-4px) rotate(-1deg);
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - CARD GLOW
+   Pulsing gold border glow for selected cards
+   ============================================================ */
+
+@keyframes cardGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(201, 162, 78, 0.15),
+      0 0 24px rgba(201, 162, 78, 0.05),
+      0 4px 20px rgba(0, 0, 0, 0.4);
+    border-color: rgba(201, 162, 78, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(245, 215, 142, 0.3),
+      0 0 40px rgba(201, 162, 78, 0.12),
+      0 0 60px rgba(201, 162, 78, 0.05),
+      0 4px 20px rgba(0, 0, 0, 0.4);
+    border-color: rgba(245, 215, 142, 0.9);
+  }
+}
+
+/* Variant: more intense glow for hand-hover state */
+@keyframes cardGlowIntense {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(245, 215, 142, 0.2),
+      0 0 40px rgba(201, 162, 78, 0.1),
+      0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(245, 215, 142, 0.4),
+      0 0 60px rgba(201, 162, 78, 0.2),
+      0 0 80px rgba(201, 162, 78, 0.08),
+      0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Variant: gentle, slow glow for ambient card state */
+@keyframes cardGlowSubtle {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(201, 162, 78, 0.08),
+      0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 16px rgba(201, 162, 78, 0.15),
+      0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - SHIMMER
+   Text shimmer effect for loading states and titles
+   ============================================================ */
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+/* Variant: faster shimmer for loading text */
+@keyframes shimmerFast {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+/* Surface shimmer sweep (for buttons) */
+@keyframes shimmerSweep {
+  0% {
+    left: -60%;
+  }
+  100% {
+    left: 120%;
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - FADE IN UP
+   Elements appearing with upward motion
+   ============================================================ */
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Variant: fade in from further away */
+@keyframes fadeInUpLarge {
+  0% {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Variant: fade in with slight scale */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Fade in from left */
+@keyframes fadeInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Fade in from right */
+@keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Simple fade in */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Fade out down */
+@keyframes fadeOutDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - TYPEWRITER
+   Cursor blink effect for streaming/loading text
+   ============================================================ */
+
+@keyframes typewriter {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Variant: smoother cursor blink */
+@keyframes typewriterSmooth {
+  0%, 40% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  90%, 100% {
+    opacity: 1;
+  }
+}
+
+/* Text reveal (left to right wipe) */
+@keyframes textReveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - PARTICLE FLOAT
+   Gold particles drifting upward
+   ============================================================ */
+
+@keyframes particleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) scale(0.5);
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-50vh) translateX(20px) scale(1);
+  }
+  90% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100vh) translateX(-10px) scale(0.3);
+  }
+}
+
+/* Variant: shorter float for card-local particles */
+@keyframes particleFloatShort {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) translateX(var(--drift, 10px)) scale(0.2);
+  }
+}
+
+/* Variant: spiral drift */
+@keyframes particleSpiralFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) rotate(0deg) scale(0.3);
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-40px) translateX(15px) rotate(180deg) scale(0.8);
+  }
+  85% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) translateX(-5px) rotate(360deg) scale(0.1);
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - ORB GLOW
+   Hand cursor glow ring pulsing
+   ============================================================ */
+
+@keyframes orbGlow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 8px rgba(201, 162, 78, 0.2);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 0 16px rgba(201, 162, 78, 0.3);
+  }
+}
+
+/* Variant: double ring orb */
+@keyframes orbGlowDouble {
+  0%, 100% {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(1);
+    border-width: 1px;
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+    border-width: 2px;
+  }
+}
+
+
+/* ============================================================
+   @KEYFRAMES - GRAB PULSE
+   Hand grab feedback animation (quick pulse)
+   ============================================================ */
+
+@keyframes grabPulse {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+    border-color: rgba(245, 215, 142, 0.6);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1.5);
+    border-color: rgba(245, 215, 142, 0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2);
+    border-color: rgba(245, 215, 142, 0);
+  }
+}
+
+/* Variant: ripple wave on grab */
+@keyframes grabRipple {
+  0% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.5);
+  }
+}
+
+
+/* ============================================================
+   ADDITIONAL KEYFRAMES
+   ============================================================ */
+
+/* Rotation for settings gear / loading spinner */
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Subtle pulse for interactive hints */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.03);
+  }
+}
+
+/* Breathing glow effect */
+@keyframes breathe {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(201, 162, 78, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(201, 162, 78, 0.25);
+  }
+}
+
+/* Shake for error / attention */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-3px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(3px);
+  }
+}
+
+/* Scale bounce for card selection feedback */
+@keyframes scaleBounce {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  60% {
+    transform: scale(0.97);
+  }
+  80% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Moon gentle sway */
+@keyframes moonSway {
+  0%, 100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+/* Gradient shift for backgrounds */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Underline draw animation */
+@keyframes underlineDraw {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+
+/* ============================================================
+   TRANSITION UTILITY CLASSES
+   Smooth state changes for various elements
+   ============================================================ */
+
+/* Base transition presets */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.transition-fast {
+  transition: all 0.15s ease;
+}
+
+.transition-smooth {
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.transition-bounce {
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Opacity transitions */
+.transition-opacity {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.transition-opacity-slow {
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+/* Transform transitions */
+.transition-transform {
+  transition: transform 0.3s ease;
+}
+
+.transition-transform-smooth {
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Color transitions */
+.transition-color {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Shadow transitions */
+.transition-shadow {
+  transition: box-shadow 0.3s ease;
+}
+
+
+/* ============================================================
+   ANIMATION UTILITY CLASSES
+   Apply animations declaratively
+   ============================================================ */
+
+/* Fade in animations */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up-slow {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in-left {
+  animation: fadeInLeft 0.5s ease-out forwards;
+}
+
+.animate-fade-in-right {
+  animation: fadeInRight 0.5s ease-out forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.5s ease-out forwards;
+}
+
+/* Float animations */
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 7s ease-in-out infinite;
+}
+
+.animate-float-wide {
+  animation: floatWide 8s ease-in-out infinite;
+}
+
+/* Glow animations */
+.animate-glow {
+  animation: cardGlow 2s ease-in-out infinite;
+}
+
+.animate-glow-subtle {
+  animation: cardGlowSubtle 3s ease-in-out infinite;
+}
+
+.animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* Pulse animation */
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Shimmer text */
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Shake for errors */
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Scale bounce */
+.animate-bounce {
+  animation: scaleBounce 0.5s ease-out;
+}
+
+
+/* ============================================================
+   ANIMATION DELAY UTILITIES
+   ============================================================ */
+
+.animation-delay-100 { animation-delay: 0.1s; }
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
+.animation-delay-400 { animation-delay: 0.4s; }
+.animation-delay-500 { animation-delay: 0.5s; }
+.animation-delay-600 { animation-delay: 0.6s; }
+.animation-delay-700 { animation-delay: 0.7s; }
+.animation-delay-800 { animation-delay: 0.8s; }
+.animation-delay-1000 { animation-delay: 1.0s; }
+.animation-delay-1200 { animation-delay: 1.2s; }
+.animation-delay-1500 { animation-delay: 1.5s; }
+.animation-delay-2000 { animation-delay: 2.0s; }
+
+
+/* ============================================================
+   ANIMATION FILL MODE UTILITIES
+   ============================================================ */
+
+.fill-forwards {
+  animation-fill-mode: forwards;
+}
+
+.fill-both {
+  animation-fill-mode: both;
+}
+
+
+/* ============================================================
+   STAGGER ANIMATION CHILDREN
+   Apply to parent to stagger child animations
+   ============================================================ */
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
+
+.stagger-children-slow > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children-slow > *:nth-child(2) { animation-delay: 0.25s; }
+.stagger-children-slow > *:nth-child(3) { animation-delay: 0.4s; }
+.stagger-children-slow > *:nth-child(4) { animation-delay: 0.55s; }
+.stagger-children-slow > *:nth-child(5) { animation-delay: 0.7s; }
+
+
+/* ============================================================
+   PARTICLE SYSTEM CLASSES
+   Gold floating particles container and elements
+   ============================================================ */
+
+.particles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  bottom: -10px;
+  width: 3px;
+  height: 3px;
+  background: rgba(201, 162, 78, 0.6);
+  border-radius: 50%;
+  animation: particleFloat var(--duration, 8s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+.particle--gold {
+  background: rgba(245, 215, 142, 0.7);
+  box-shadow: 0 0 4px rgba(245, 215, 142, 0.3);
+}
+
+.particle--small {
+  width: 2px;
+  height: 2px;
+  opacity: 0.6;
+}
+
+.particle--large {
+  width: 4px;
+  height: 4px;
+  box-shadow: 0 0 6px rgba(201, 162, 78, 0.4);
+}
+
+/* Card-local particles */
+.card-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.card-particle {
+  position: absolute;
+  bottom: 10%;
+  width: 2px;
+  height: 2px;
+  background: rgba(245, 215, 142, 0.5);
+  border-radius: 50%;
+  animation: particleFloatShort 3s ease-out infinite;
+}
+
+
+/* ============================================================
+   VISIBILITY STATE CLASSES
+   ============================================================ */
+
+/* Hidden by default, animate in */
+.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Enter / exit states */
+.enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+
+/* ============================================================
+   REDUCED MOTION MEDIA QUERY
+   Accessibility: respect user preference for reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .star {
+    animation: none !important;
+    opacity: 0.5;
+  }
+
+  .moon {
+    animation: none !important;
+  }
+
+  .header h1 {
+    animation: none !important;
+    background-size: 100% 100%;
+  }
+
+  .card-flip {
+    transition-duration: 0.01ms !important;
+  }
+
+  .card-flip.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .loading-spinner {
+    animation: rotate 2s linear infinite !important;
+  }
+
+  .particle,
+  .card-particle {
+    display: none !important;
+  }
+
+  .animate-float,
+  .animate-float-slow,
+  .animate-float-wide {
+    animation: none !important;
+  }
+
+  .animate-glow,
+  .animate-glow-subtle,
+  .animate-breathe {
+    animation: none !important;
+  }
+
+  .hand-cursor::before {
+    animation: none !important;
+  }
+
+  /* Keep essential visual feedback but remove decorative motion */
+  .draw-btn::after {
+    display: none;
+  }
+
+  .spread-btn::before {
+    display: none;
+  }
+
+  .deck-card {
+    transition: box-shadow 0.1s ease, border-color 0.1s ease !important;
+  }
+
+  .deck-card:hover {
+    transform: translateY(-5px) !important;
+  }
+}
+
+
+/* ============================================================
+   PRINT STYLES
+   Clean output for printing readings
+   ============================================================ */
+
+@media print {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #333;
+  }
+
+  body::before,
+  .stars,
+  .particles-container,
+  .hand-cursor,
+  .webcam-container,
+  .settings-toggle,
+  .draw-btn,
+  .spread-section,
+  .deck-area,
+  .deck-hint,
+  .reset-btn {
+    display: none !important;
+  }
+
+  .card-back {
+    border-color: #999;
+    background: #f9f6f0;
+  }
+
+  .card-name {
+    color: #333;
+  }
+
+  .interpretation {
+    border-color: #ccc;
+    background: #fff;
+  }
+}
