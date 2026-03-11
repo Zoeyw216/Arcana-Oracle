@@ -61,7 +61,7 @@ function setupUI() {
   document.getElementById('enableCamera')?.addEventListener('click', () => {
     initHandTracking();
     closeModeModal();
-    showDeckHint(true);
+    // Hint will be shown after camera permission is granted (see initHandTracking)
   });
   document.getElementById('useClick')?.addEventListener('click', () => {
     useHandTracking = false;
@@ -119,9 +119,13 @@ async function initHandTracking() {
     await handTracker.init();
     const previewEl = document.getElementById('cameraPreview');
     const ok = await handTracker.startCamera(previewEl);
-    if (!ok) {
+    if (ok) {
+      // Camera ready — now show the hand gesture hint
+      showDeckHint(true);
+    } else {
       useHandTracking = false;
       handTracker = null;
+      showDeckHint(false); // Fall back to click hint
       showNotification('摄像头访问被拒绝，已切换到点击模式');
     }
   } catch (err) {
@@ -452,12 +456,13 @@ function showDeckHint(isHandMode) {
     : '凭直觉，点选3张牌';
   hint.style.whiteSpace = 'pre-line';
   // Show after a brief delay for modal to close
+  const duration = isHandMode ? 6000 : 4000;
   requestAnimationFrame(() => {
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.add('fade-out');
       setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-    }, 4000);
+    }, duration);
   });
 }
 
