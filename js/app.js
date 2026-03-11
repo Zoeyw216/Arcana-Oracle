@@ -448,20 +448,32 @@ function proceedToDrawing() {
   }
 }
 
+let _hintProtectedUntil = 0; // timestamp: hint cannot be hidden before this
+
 function showDeckHint(isHandMode) {
   const hint = document.getElementById('deckHint');
   if (!hint) return;
+
+  // If hint is currently protected (hand mode), ignore duplicate calls
+  if (Date.now() < _hintProtectedUntil && hint.classList.contains('show')) return;
+
   hint.classList.remove('fade-out', 'show');
   hint.textContent = isHandMode
     ? '张开手掌移至空白处，牌阵加速旋转\n移至牌上减速，握拳抓取，共3张'
     : '凭直觉，点选3张牌';
   hint.style.whiteSpace = 'pre-line';
-  // Show after a brief delay for modal to close
+
   requestAnimationFrame(() => {
     hint.classList.add('show');
     if (isHandMode) {
-      // Hand mode: hint stays until first card is picked (dismissed in pickCard)
+      // Protect hint for 10 seconds — cannot be removed by any code path
+      _hintProtectedUntil = Date.now() + 10000;
+      setTimeout(() => {
+        hint.classList.add('fade-out');
+        setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
+      }, 10000);
     } else {
+      _hintProtectedUntil = 0;
       setTimeout(() => {
         hint.classList.add('fade-out');
         setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
