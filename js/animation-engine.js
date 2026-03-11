@@ -102,7 +102,7 @@ export class AnimationEngine {
     this._radiiSet = false;
 
     // Global orbit speed (radians / second)
-    this.orbitSpeed = 0.5;
+    this.orbitSpeed = 0.8;
 
     // rAF handle
     this._rafId = null;

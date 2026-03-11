@@ -811,4 +811,56 @@
   .cards-row--three-spread .card-wrapper:nth-child(2) {
     transform: translateY(-6px);
   }
+
+  /* Reading cards — fit 3 in a row on mobile */
+  .card-wrapper--reading {
+    width: 100px;
+  }
+
+  .card-wrapper--reading .card-flip {
+    width: 100px;
+    height: 168px;
+  }
+
+  .card-wrapper--reading .card-name {
+    font-size: 0.78em;
+    letter-spacing: 1px;
+  }
+
+  .card-wrapper--reading .card-name-en {
+    font-size: 0.52em;
+  }
+
+  .card-wrapper--reading .card-label {
+    font-size: 0.65em;
+  }
+
+  .card-wrapper--reading .card-symbol {
+    font-size: 2.2em;
+  }
+
+  .card-wrapper--reading .card-direction {
+    font-size: 0.6em;
+    padding: 1px 8px;
+  }
+}
+
+/* Small phones — reading cards */
+@media (max-width: 360px) {
+  .card-wrapper--reading {
+    width: 90px;
+  }
+
+  .card-wrapper--reading .card-flip {
+    width: 90px;
+    height: 152px;
+  }
+
+  .card-wrapper--reading .card-name {
+    font-size: 0.72em;
+  }
+
+  .card-wrapper--reading .card-symbol {
+    font-size: 2em;
+  }
 }

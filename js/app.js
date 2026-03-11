@@ -162,7 +162,7 @@ function handleHandMove({ x, y, visible, grabbing }) {
       if (hoveredCard) {
         animEngine.setOrbitSpeed(0.05);
       } else {
-        animEngine.setOrbitSpeed(0.5);
+        animEngine.setOrbitSpeed(0.8);
       }
     }
     checkCardHover(x, y);
@@ -193,7 +193,7 @@ function handleRelease() {
 
 function getCardAtPosition(x, y) {
   const cards = document.querySelectorAll('.floating-card:not(.picked)');
-  const PAD = 25;
+  const PAD = window.innerWidth <= 480 ? 12 : 25;
   let best = null;
   let bestDist = Infinity;
   for (const card of cards) {
@@ -565,13 +565,13 @@ function showFloatingDeck() {
       } else {
         if (hoveringCard) {
           hoveringCard = false;
-          animEngine?.setOrbitSpeed(0.5);
+          animEngine?.setOrbitSpeed(0.8);
         }
       }
     });
     deckArea.addEventListener('mouseleave', () => {
       hoveringCard = false;
-      animEngine?.setOrbitSpeed(0.5);
+      animEngine?.setOrbitSpeed(0.8);
     });
   }
 
