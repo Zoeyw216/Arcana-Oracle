@@ -448,38 +448,55 @@ function proceedToDrawing() {
   }
 }
 
-let _hintProtectedUntil = 0; // timestamp: hint cannot be hidden before this
+let _hintLocked = false;   // when true, NO code path can hide the hint
+let _hintTimer  = null;    // single auto-hide timer (cleared on each new call)
 
 function showDeckHint(isHandMode) {
   const hint = document.getElementById('deckHint');
   if (!hint) return;
 
-  // If hint is currently protected (hand mode), ignore duplicate calls
-  if (Date.now() < _hintProtectedUntil && hint.classList.contains('show')) return;
+  // If hint is locked (hand-mode protection active), ignore ALL calls
+  if (_hintLocked) return;
 
-  hint.classList.remove('fade-out', 'show');
+  // Cancel any pending auto-hide from a previous call
+  if (_hintTimer) { clearTimeout(_hintTimer); _hintTimer = null; }
+
   hint.textContent = isHandMode
     ? '张开手掌移至空白处，牌阵加速旋转\n移至牌上减速，握拳抓取，共3张'
     : '凭直觉，点选3张牌';
   hint.style.whiteSpace = 'pre-line';
 
-  requestAnimationFrame(() => {
-    hint.classList.add('show');
-    if (isHandMode) {
-      // Protect hint for 15 seconds — cannot be removed by any code path
-      _hintProtectedUntil = Date.now() + 15000;
-      setTimeout(() => {
-        hint.classList.add('fade-out');
-        setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-      }, 15000);
-    } else {
-      _hintProtectedUntil = 0;
-      setTimeout(() => {
-        hint.classList.add('fade-out');
-        setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-      }, 4000);
-    }
-  });
+  // Show immediately — no requestAnimationFrame gap
+  hint.classList.remove('fade-out');
+  hint.classList.add('show');
+
+  const duration = isHandMode ? 15000 : 4000;
+
+  // Lock during hand mode — nothing can dismiss until timer fires
+  if (isHandMode) _hintLocked = true;
+
+  // Single auto-hide timer
+  _hintTimer = setTimeout(() => {
+    _hintLocked = false;
+    _hintTimer = null;
+    _fadeOutHint();
+  }, duration);
+}
+
+/** Internal: fade out and remove hint classes */
+function _fadeOutHint() {
+  const hint = document.getElementById('deckHint');
+  if (!hint || !hint.classList.contains('show')) return;
+  hint.classList.add('fade-out');
+  setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
+}
+
+/** Dismiss hint — respects lock unless force=true */
+function dismissHint(force) {
+  if (_hintLocked && !force) return;
+  _hintLocked = false;
+  if (_hintTimer) { clearTimeout(_hintTimer); _hintTimer = null; }
+  _fadeOutHint();
 }
 
 // Fisher-Yates shuffle
@@ -574,12 +591,8 @@ function pickCard(cardEl) {
   cardEl.style.zIndex = '999';
   pickCount++;
 
-  // Dismiss hint on first pick
-  const hint = document.getElementById('deckHint');
-  if (hint && hint.classList.contains('show')) {
-    hint.classList.add('fade-out');
-    setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-  }
+  // Dismiss hint on first pick (respects hand-mode lock)
+  dismissHint();
 
   // Get the pre-assigned card from the shuffled deck
   const idx = parseInt(cardEl.dataset.index, 10);
@@ -598,7 +611,7 @@ function pickCard(cardEl) {
         animEngine = null;
       }
       document.getElementById('deckArea')?.classList.remove('show');
-      document.getElementById('deckHint')?.classList.remove('show');
+      dismissHint(true); // force — all cards picked
       showResults();
     }, 800);
   } else {
@@ -1097,7 +1110,7 @@ function resetAll() {
   document.getElementById('drawBtn')?.classList.remove('hidden');
   document.getElementById('results')?.classList.remove('show');
   document.getElementById('deckArea')?.classList.remove('show');
-  document.getElementById('deckHint')?.classList.remove('show');
+  dismissHint(true); // force — full reset
 
   const input = document.getElementById('questionInput');
   if (input) {
