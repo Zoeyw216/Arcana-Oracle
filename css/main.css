@@ -1143,10 +1143,20 @@ body::before {
     --section-gap: 16px;
   }
 
-  /* Compact layout — reduce top padding, let content breathe naturally */
+  /* Vertically center visible content on mobile */
   .container {
-    padding-top: 48px;
-    padding-bottom: 24px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 20px;
+  }
+
+  /* Hide inactive areas so they don't consume flex space */
+  .deck-area:not(.show) {
+    display: none;
   }
 
   body {
