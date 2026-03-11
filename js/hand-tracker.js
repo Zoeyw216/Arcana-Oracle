@@ -5,8 +5,9 @@ import { FilesetResolver, HandLandmarker } from '../assets/mediapipe/vision_bund
 
 const FINGERTIP_INDICES = [4, 8, 12, 16, 20]; // thumb, index, middle, ring, pinky tips
 const PALM_CENTER_INDEX = 9; // middle finger MCP as palm proxy
-const GRAB_THRESHOLD = 0.09; // normalized distance threshold for grab detection
+const GRAB_THRESHOLD = 0.11; // normalized distance threshold for grab detection
 const GRAB_DEBOUNCE_MS = 400;
+const GRAB_CONFIRM_FRAMES = 3; // require grab detected for N consecutive frames before firing
 const SMOOTHING = 0.35; // cursor position smoothing factor (0 = no smooth, 1 = max smooth)
 
 export class HandTracker {
@@ -28,6 +29,7 @@ export class HandTracker {
     this.smoothY = 0.5;
     this.handDetected = false;
     this.frameId = null;
+    this.grabFrameCount = 0; // consecutive frames with grab detected
   }
 
   async init() {
@@ -148,9 +150,18 @@ export class HandTracker {
     const screenX = this.smoothX * window.innerWidth;
     const screenY = this.smoothY * window.innerHeight;
 
-    // Detect grab gesture
+    // Detect grab gesture with multi-frame confirmation
+    const rawGrab = this._detectGrab(landmarks);
     const wasGrabbing = this.isGrabbing;
-    this.isGrabbing = this._detectGrab(landmarks);
+
+    if (rawGrab) {
+      this.grabFrameCount++;
+    } else {
+      this.grabFrameCount = 0;
+    }
+
+    // Only confirm grab after N consecutive frames
+    this.isGrabbing = this.grabFrameCount >= GRAB_CONFIRM_FRAMES;
 
     // Emit hand position
     this.onHandMove({
@@ -186,8 +197,8 @@ export class HandTracker {
       if (dist < GRAB_THRESHOLD) closedCount++;
     }
 
-    // Require 4+ fingers close to palm for grab
-    return closedCount >= 4;
+    // Require 3+ fingers close to palm for grab
+    return closedCount >= 3;
   }
 
   static isSupported() {

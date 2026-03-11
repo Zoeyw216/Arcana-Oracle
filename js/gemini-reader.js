@@ -1,9 +1,7 @@
 // Gemini Flash API integration for tarot card readings
 // Streaming via SSE (alt=sse)
 
-const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const MODEL = 'gemini-2.0-flash';
-const API_KEY = 'AIzaSyCLqE3PELTWoNB6jzZ30gH5Ua9ilw16INs';
+const PROXY_URL = '/api/gemini';
 
 export class GeminiReader {
   constructor() {
@@ -30,25 +28,37 @@ export class GeminiReader {
       return `【${positionLabels[i]}】${card.name} (${card.nameEn}) — ${direction}\n关键词: ${keywords}`;
     }).join('\n\n');
 
-    const systemPrompt = `你是一位经验丰富的塔罗占卜师，拥有数十年的占卜经验。你精通22张大阿尔卡纳牌的深层象征意义，能够洞察牌阵中隐藏的信息。
+    const systemPrompt = `你是一位神秘而富有智慧的塔罗占卜师。你拥有数十年的占卜经验，精通22张大阿尔卡纳牌的深层象征、神话原型和心理学意涵。
 
-你的风格：
-- 像一位真正的占卜师面对面与来访者交谈，语气温暖、神秘而权威
-- 用"你"来称呼提问者，像对话一样自然
-- 语言优美流畅，富有诗意，善用比喻和意象
-- 给出的建议要具体、实用，不空泛
+你的风格和语气：
+- 你是一位温暖而洞察力强的灵性引导者，像面对面与来访者促膝交谈
+- 语气沉稳、神秘、有深度，带有一种命运低语般的诗意感
+- 用"你"称呼来访者，行文亲切自然
+- 善于将塔罗牌的象征意义与来访者的具体生活情境联系起来
+- 不要泛泛而谈，要深入到来访者的问题中给出精准、有温度的指引
+- 绝对不要给出具体的行动清单或"建议1、建议2"这种列表。你是塔罗师，不是人生导师或职业顾问
+- 如果要引导来访者，用塔罗牌的意象和隐喻来启发，比如"命运之轮提醒你顺应变化的潮流"，而不是"制定详细的计划并学习新技能"
+
+核心要求（最重要）：
+- 你的解读必须紧密围绕来访者提出的问题展开，所有分析都要与这个问题直接相关
+- 不要只是罗列每张牌的通用含义，而是要把牌的含义融入到来访者的问题语境中
+- 三张牌要构成一个完整的叙事：过去的因→现在的境→未来的果
+- 字数不少于800字，给出丰富、有深度的解读
 
 输出格式要求（非常重要）：
-- 绝对不要使用任何 markdown 格式符号，包括但不限于：#、##、###、**、*、---、- 列表符号、> 引用符号
+- 绝对不要使用任何 markdown 格式符号，包括但不限于：#、##、###、**、*、---、- 列表符号、> 引用符号、数字编号
 - 用自然的中文段落组织文字，段落之间用空行分隔
 - 不要用编号列表，用流畅的叙述方式表达
-- 牌名可以用书名号标注，如「愚者」
+- 牌名用书名号标注，如「愚者」
 
 解读结构：
-1. 先用一两句话营造氛围，引入这次占卜
-2. 依次解读每张牌在其位置（过去、现在、未来）的含义，结合提问者的具体问题
-3. 分析三张牌之间的关联和故事线
-4. 给出综合建议和具体的行动指引`;
+- 以一小段富有氛围感的开场白引入（与来访者的问题相关，不要千篇一律）
+- 从「过去」的牌开始，解读这张牌揭示了来访者在这个问题上经历过什么，是如何走到今天的
+- 然后解读「现在」的牌，分析来访者此刻的处境、心态、面临的机遇或挑战
+- 接着解读「未来」的牌，预示接下来可能的发展方向和需要注意的事项
+- 最后把三张牌串联成一个完整的故事，给出有洞察力的综合分析
+- 用塔罗牌的意象给予来访者灵性层面的启示和方向感，而非世俗的具体操作建议
+- 以一句富有力量感和命运感的结语收尾`;
 
     const userPrompt = `我的问题是：「${question}」
 
@@ -59,7 +69,7 @@ ${spreadDescription}
 请为我详细解读这次塔罗占卜。`;
 
     this.abortController = new AbortController();
-    const url = `${API_BASE}/models/${MODEL}:streamGenerateContent?key=${API_KEY}&alt=sse`;
+    const url = PROXY_URL;
 
     try {
       const response = await fetch(url, {
@@ -163,22 +173,34 @@ ${spreadDescription}
    */
   static getStaticReading(cards, question, spreadType) {
     const positionLabels = ['过去', '现在', '未来'];
+    const c = cards.map((card, i) => ({
+      name: card.name,
+      nameEn: card.nameEn,
+      dir: card.isReversed ? '逆位' : '正位',
+      desc: card.isReversed ? card.reversedDesc : card.uprightDesc,
+      keywords: card.isReversed ? card.reversed : card.upright,
+      pos: positionLabels[i]
+    }));
 
     let html = '';
 
-    cards.forEach((card, i) => {
-      const dir = card.isReversed ? '逆位' : '正位';
-      const desc = card.isReversed ? card.reversedDesc : card.uprightDesc;
-      html += `<div class="interp-card-title">${positionLabels[i]} — ${card.name}（${dir}）</div>`;
-      html += `<div class="interp-text">${desc}</div>`;
+    // Atmospheric intro
+    html += `<p>让我们一同凝视这三张牌为「${question}」所揭示的信息。命运的丝线在牌面之间交织，且听它低语。</p>`;
+    html += '<br>';
+
+    // Each card — rich narrative
+    c.forEach((card) => {
+      html += `<p><strong>${card.pos} —「${card.name}」（${card.dir}）</strong></p>`;
+      html += `<p>${card.desc}</p>`;
+      html += `<p>关键意象：${card.keywords}</p>`;
+      html += '<br>';
     });
 
-    html += '<div class="interp-summary">';
-    const pastE = cards[0].isReversed ? '挑战' : '力量';
-    const presE = cards[1].isReversed ? '反思' : '信心';
-    const futE = cards[2].isReversed ? '谨慎前行' : '积极展望';
-    html += `关于「${question}」——过去的${cards[0].name}为你积累了${pastE}，当下的${cards[1].name}引导你带着${presE}面对现状，而未来的${cards[2].name}预示着你需要${futE}。牌阵整体提醒你信任过程，保持觉察。`;
-    html += '</div>';
+    // Synthesis
+    html += `<p>纵观这三张牌的脉络：过去的「${c[0].name}」${c[0].dir === '逆位' ? '暗示你曾在这个领域经历过一些需要反思的时刻' : '说明你在这条路上已经积累了宝贵的经验'}，而现在的「${c[1].name}」${c[1].dir === '逆位' ? '提醒你此刻需要换一个角度来看待当下的处境' : '则为你此刻的状态注入了一股明确的力量'}。展望未来，「${c[2].name}」${c[2].dir === '逆位' ? '暗示前方需要你保持警觉和灵活' : '预示着一个充满可能性的方向正在向你展开'}。</p>`;
+    html += '<br>';
+    html += `<p>请记住，塔罗牌为你提供的是指引而非定论。关于「${question}」，最重要的是倾听自己内心的声音，带着这些启示，勇敢地走出下一步。</p>`;
+    html += '<p style="margin-top:16px;font-size:0.85em;color:var(--text-secondary);font-style:italic;">（AI 解读暂时不可用，以上为基础解读。输入你的 Gemini API Key 可获得更深度的个性化解读。）</p>';
 
     return html;
   }

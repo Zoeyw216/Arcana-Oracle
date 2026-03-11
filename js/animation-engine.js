@@ -102,7 +102,7 @@ export class AnimationEngine {
     this._radiiSet = false;
 
     // Global orbit speed (radians / second)
-    this.orbitSpeed = 0.02;
+    this.orbitSpeed = 0.5;
 
     // rAF handle
     this._rafId = null;
@@ -274,7 +274,9 @@ export class AnimationEngine {
     }
     this._frameCount = (this._frameCount || 0) + 1;
 
-    for (const card of this.cards) {
+    // Snapshot to avoid issues with array mutation during iteration
+    const cardsSnapshot = [...this.cards];
+    for (const card of cardsSnapshot) {
       if (card.selecting) {
         this._tickSelecting(card, timestamp);
         continue;
@@ -308,7 +310,7 @@ export class AnimationEngine {
       const scaleVal = clamp(0.7 + 0.3 * ((depthFactor + 1) / 2), 0.55, 1.0);
 
       // --- Opacity: front cards opaque, back cards faded ---
-      const opacityVal = clamp(0.4 + 0.6 * ((depthFactor + 1) / 2), 0.3, 1.0);
+      const opacityVal = clamp(0.5 + 0.5 * ((depthFactor + 1) / 2), 0.55, 1.0);
 
       // --- Slight tilt following the ring curve ---
       const rz = 0; // no wobble for clean ring look
@@ -379,6 +381,9 @@ export class AnimationEngine {
 
     if (rawT >= 1) {
       card.selecting = false;
+      // Hide the card and remove from animation system
+      card.el.style.display = 'none';
+      this.removeCard(card.el);
       if (card.selectResolve) {
         card.selectResolve();
         card.selectResolve = null;
