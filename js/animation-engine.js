@@ -173,7 +173,7 @@ export class AnimationEngine {
     if (this._isMobile) {
       // --- Mobile 3D carousel ---
       // Wider ellipse for horizontal spread, very flat vertically
-      this.radiusX = this._cw * 0.55;
+      this.radiusX = this._cw * 0.47;
       this.radiusY = 40;
       // Aggressive depth: only front 2-3 cards fully visible
       this._scaleMin = 0.25;
