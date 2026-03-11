@@ -6,6 +6,9 @@
  *
  * All transforms use translate3d / rotateX / rotateY / rotateZ for GPU
  * acceleration.  A single requestAnimationFrame loop drives every card.
+ *
+ * Performance-optimised: dimensions cached, style writes minimised,
+ * zero per-frame allocation.
  */
 
 // ---------------------------------------------------------------------------
@@ -39,9 +42,15 @@ class CardState {
   /**
    * @param {HTMLElement} el
    * @param {number}      baseAngle  – starting angle on the ellipse (radians)
+   * @param {number}      width      – cached element width
+   * @param {number}      height     – cached element height
    */
-  constructor(el, baseAngle) {
+  constructor(el, baseAngle, width, height) {
     this.el = el;
+
+    // Cached dimensions (avoid per-frame offsetWidth/offsetHeight reads)
+    this.width = width;
+    this.height = height;
 
     // Orbit
     this.baseAngle = baseAngle;   // target angle (redistributed on remove)
@@ -75,6 +84,11 @@ class CardState {
     // Cached computed position so we can read it when starting selection
     this.lastPos = { x: 0, y: 0, z: 0 };
     this.lastRot = { rx: 0, ry: 0, rz: 0 };
+
+    // Previous style values — only write to DOM when changed
+    this._prevPointerEvents = '';
+    this._prevFilter = '';
+    this._prevZIndex = -1;
   }
 }
 
@@ -96,10 +110,16 @@ export class AnimationEngine {
     /** @type {CardState[]} */
     this.cards = [];
 
-    // Ellipse radii – computed from container on first frame
+    // Cached container dimensions (updated via ResizeObserver)
+    this._cw = containerEl.clientWidth;
+    this._ch = containerEl.clientHeight;
+    this._cx = this._cw / 2;
+    this._cy = this._ch / 2;
+
+    // Ellipse radii – computed from container
     this.radiusX = 0;
     this.radiusY = 0;
-    this._radiiSet = false;
+    this._updateRadii();
 
     // Global orbit speed (radians / second)
     this.orbitSpeed = 0.8;
@@ -115,6 +135,22 @@ export class AnimationEngine {
 
     // Bind once so we can cancel
     this._tick = this._tick.bind(this);
+
+    // Listen for container resize — update cached dimensions without per-frame reads
+    this._resizeObserver = new ResizeObserver(() => {
+      this._cw = this.container.clientWidth;
+      this._ch = this.container.clientHeight;
+      this._cx = this._cw / 2;
+      this._cy = this._ch / 2;
+      this._updateRadii();
+    });
+    this._resizeObserver.observe(this.container);
+  }
+
+  /** Recompute ellipse radii from cached container size. */
+  _updateRadii() {
+    this.radiusX = Math.min(this._cw * 0.42, 480);
+    this.radiusY = Math.min(this._ch * 0.15, 120);
   }
 
   // -----------------------------------------------------------------------
@@ -130,11 +166,15 @@ export class AnimationEngine {
    */
   addCard(cardEl, index, total) {
     const baseAngle = (2 * Math.PI * index) / total;
-    const state = new CardState(cardEl, baseAngle);
+
+    // Cache dimensions once — avoids per-frame layout reads
+    const w = cardEl.offsetWidth || 80;
+    const h = cardEl.offsetHeight || 124;
+    const state = new CardState(cardEl, baseAngle, w, h);
 
     // Make sure the element can be transformed without causing layout shifts
     cardEl.style.position = 'absolute';
-    cardEl.style.willChange = 'transform';
+    cardEl.style.willChange = 'transform, opacity';
 
     this.cards.push(state);
   }
@@ -178,6 +218,7 @@ export class AnimationEngine {
       state.highlighted = false;
       cardEl.style.filter = '';
       cardEl.style.boxShadow = '';
+      state._prevFilter = '';
     }
   }
 
@@ -195,9 +236,14 @@ export class AnimationEngine {
     return new Promise((resolve) => {
       state.selecting = true;
       state.selectStartTime = performance.now();
-      state.selectStartPos = { ...state.lastPos };
-      state.selectStartRot = { ...state.lastRot };
-      state.selectTargetPos = { x: targetPos.x, y: targetPos.y };
+      state.selectStartPos.x = state.lastPos.x;
+      state.selectStartPos.y = state.lastPos.y;
+      state.selectStartPos.z = state.lastPos.z;
+      state.selectStartRot.rx = state.lastRot.rx;
+      state.selectStartRot.ry = state.lastRot.ry;
+      state.selectStartRot.rz = state.lastRot.rz;
+      state.selectTargetPos.x = targetPos.x;
+      state.selectTargetPos.y = targetPos.y;
       state.selectResolve = resolve;
 
       // Redistribute remaining cards smoothly
@@ -249,34 +295,21 @@ export class AnimationEngine {
   _tick(timestamp) {
     if (!this._running) return;
 
-    const frameStart = performance.now();
-
     if (this._lastTimestamp === null) {
       this._lastTimestamp = timestamp;
     }
     const dt = (timestamp - this._lastTimestamp) / 1000; // seconds
     this._lastTimestamp = timestamp;
 
-    // Time in seconds since page load (for sin/cos)
-    const t = timestamp / 1000;
+    // Use cached container centre (updated by ResizeObserver)
+    const cx = this._cx;
+    const cy = this._cy;
 
-    // Container centre
-    const cw = this.container.clientWidth;
-    const ch = this.container.clientHeight;
-    const cx = cw / 2;
-    const cy = ch / 2;
+    const cards = this.cards;
+    const len = cards.length;
+    for (let i = 0; i < len; i++) {
+      const card = cards[i];
 
-    // Compute orbit radii — tight ring
-    if (!this._radiiSet || this._frameCount % 60 === 0) {
-      this.radiusX = Math.min(cw * 0.42, 480);
-      this.radiusY = Math.min(ch * 0.15, 120);
-      this._radiiSet = true;
-    }
-    this._frameCount = (this._frameCount || 0) + 1;
-
-    // Snapshot to avoid issues with array mutation during iteration
-    const cardsSnapshot = [...this.cards];
-    for (const card of cardsSnapshot) {
       if (card.selecting) {
         this._tickSelecting(card, timestamp);
         continue;
@@ -287,68 +320,60 @@ export class AnimationEngine {
       card.baseAngle += this.orbitSpeed * dt;
 
       const angle = card.currentAngle;
-      // Normalize angle to [0, 2π)
-      const normAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-      // depth: 0 = front (bottom of ellipse, angle=π/2), 1 = back (top, angle=3π/2)
-      // sin(angle): +1 at bottom (front), -1 at top (back)
       const depthFactor = Math.sin(angle); // +1=front, -1=back
 
-      // --- Position on ellipse ---
-      const cardW = card.el.offsetWidth || 80;
-      const cardH = card.el.offsetHeight || 124;
-      const ex = cx + this.radiusX * Math.cos(angle) - cardW / 2;
-      const ey = cy + this.radiusY * Math.sin(angle) - cardH / 2;
-
-      // Depth z-offset: front cards closer, back cards further
-      const z = 40 * depthFactor;
-
-      const posX = ex;
-      const posY = ey;
-      const posZ = z;
+      // --- Position on ellipse (use cached card dimensions) ---------------
+      const posX = cx + this.radiusX * Math.cos(angle) - card.width / 2;
+      const posY = cy + this.radiusY * Math.sin(angle) - card.height / 2;
+      const posZ = 40 * depthFactor;
 
       // --- Scale by depth: front cards full size, back cards smaller ---
-      const scaleVal = clamp(0.7 + 0.3 * ((depthFactor + 1) / 2), 0.55, 1.0);
+      const scaleVal = 0.55 + 0.45 * clamp((depthFactor + 1) * 0.5, 0, 1);
 
       // --- Opacity: front cards opaque, back cards faded ---
-      const opacityVal = clamp(0.5 + 0.5 * ((depthFactor + 1) / 2), 0.55, 1.0);
+      const opacityVal = 0.55 + 0.45 * clamp((depthFactor + 1) * 0.5, 0, 1);
 
-      // --- Slight tilt following the ring curve ---
-      const rz = 0; // no wobble for clean ring look
-
-      // --- Apply transform ------------------------------------------------
+      // --- Apply transform + opacity in one write -------------------------
       card.el.style.transform =
-        `translate3d(${posX}px, ${posY}px, ${posZ}px) scale(${scaleVal})`;
+        `translate3d(${posX.toFixed(1)}px,${posY.toFixed(1)}px,${posZ.toFixed(1)}px) scale(${scaleVal.toFixed(3)})`;
       card.el.style.opacity = opacityVal;
 
-      // Disable pointer events on back cards (top half of ellipse)
-      card.el.style.pointerEvents = depthFactor > -0.2 ? 'auto' : 'none';
+      // Disable pointer events on back cards (only write when changed)
+      const pe = depthFactor > -0.2 ? 'auto' : 'none';
+      if (card._prevPointerEvents !== pe) {
+        card.el.style.pointerEvents = pe;
+        card._prevPointerEvents = pe;
+      }
 
-      // Cache for selection start snapshot
-      card.lastPos = { x: posX, y: posY, z: posZ };
-      card.lastRot = { rx: 0, ry: 0, rz: 0 };
+      // Cache for selection start snapshot (reuse existing objects)
+      card.lastPos.x = posX;
+      card.lastPos.y = posY;
+      card.lastPos.z = posZ;
+      card.lastRot.rx = 0;
+      card.lastRot.ry = 0;
+      card.lastRot.rz = 0;
 
       // --- Highlight glow (only for front cards) -------------------------
+      let filterVal = '';
       if (card.highlighted && depthFactor > -0.2) {
         card.highlightPhase += dt;
         const pulse = 0.5 + 0.5 * Math.sin(card.highlightPhase * 4);
         const glowSize = lerp(4, 14, pulse);
         const glowOpacity = lerp(0.5, 1, pulse);
-        card.el.style.filter =
-          `drop-shadow(0 0 ${glowSize}px rgba(180, 140, 255, ${glowOpacity}))`;
-      } else {
-        card.el.style.filter = '';
+        filterVal =
+          `drop-shadow(0 0 ${glowSize.toFixed(0)}px rgba(180,140,255,${glowOpacity.toFixed(2)}))`;
+      }
+      if (card._prevFilter !== filterVal) {
+        card.el.style.filter = filterVal;
+        card._prevFilter = filterVal;
       }
 
-      // z-index by depth so front cards are on top
-      card.el.style.zIndex = Math.round(posZ + 100);
-    }
-
-    // --- Frame budget warning --------------------------------------------
-    const elapsed = performance.now() - frameStart;
-    if (elapsed > 16) {
-      console.warn(
-        `[AnimationEngine] Frame budget exceeded: ${elapsed.toFixed(2)}ms`
-      );
+      // z-index by depth so front cards are on top (only write when changed)
+      const zi = Math.round(posZ + 100);
+      if (card._prevZIndex !== zi) {
+        card.el.style.zIndex = zi;
+        card._prevZIndex = zi;
+      }
     }
 
     this._rafId = requestAnimationFrame(this._tick);
