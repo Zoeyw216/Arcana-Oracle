@@ -355,7 +355,8 @@ export class AnimationEngine {
     const rX = this.radiusX;
     const rY = this.radiusY;
 
-    const cards = this.cards;
+    // Snapshot: _tickSelecting → removeCard → splice() can mutate this.cards mid-loop
+    const cards = [...this.cards];
     const len = cards.length;
     for (let i = 0; i < len; i++) {
       const card = cards[i];
