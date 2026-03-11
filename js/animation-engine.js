@@ -127,6 +127,8 @@ export class AnimationEngine {
     this._opacityMin = 0.55;
     this._opacityMax = 1.0;
     this._depthZ = 40;
+    this._depthPower = 1.0;   // steeper = more dramatic front/back separation
+    this._speedMult = 1.0;    // orbit speed multiplier (mobile faster)
     this._isMobile = false;
 
     this._updateLayout();
@@ -170,16 +172,19 @@ export class AnimationEngine {
 
     if (this._isMobile) {
       // --- Mobile 3D carousel ---
-      // Flatter ellipse so front & back rows overlap vertically
-      this.radiusX = this._cw * 0.36;
-      this.radiusY = 28;
-      // Dramatic depth: back cards tiny & invisible
-      this._scaleMin = 0.25;
+      // Wider ellipse for horizontal spread, very flat vertically
+      this.radiusX = this._cw * 0.42;
+      this.radiusY = 22;
+      // Aggressive depth: only front 2-3 cards fully visible
+      this._scaleMin = 0.12;
       this._scaleMax = 1.0;
       this._opacityMin = 0.0;
       this._opacityMax = 1.0;
-      this._depthZ = 60;
-      // Closer perspective for stronger 3D on mobile
+      this._depthZ = 80;
+      // Power curve makes depth drop steeply behind the front row
+      this._depthPower = 2.5;
+      // Faster orbit so rotation is clearly visible on identical card backs
+      this._speedMult = 2.0;
       this.container.style.perspective = '600px';
     } else {
       // --- Desktop gentle ring ---
@@ -190,6 +195,8 @@ export class AnimationEngine {
       this._opacityMin = 0.55;
       this._opacityMax = 1.0;
       this._depthZ = 40;
+      this._depthPower = 1.0;
+      this._speedMult = 1.0;
       this.container.style.perspective = '1200px';
     }
   }
@@ -352,6 +359,8 @@ export class AnimationEngine {
     const oMin = this._opacityMin;
     const oRange = this._opacityMax - this._opacityMin;
     const dZ = this._depthZ;
+    const dPow = this._depthPower;
+    const sMult = this._speedMult;
     const rX = this.radiusX;
     const rY = this.radiusY;
 
@@ -368,13 +377,15 @@ export class AnimationEngine {
 
       // --- Orbit angle progression ----------------------------------------
       card.currentAngle = lerp(card.currentAngle, card.baseAngle, 0.03);
-      card.baseAngle += this.orbitSpeed * dt;
+      card.baseAngle += this.orbitSpeed * sMult * dt;
 
       const angle = card.currentAngle;
       const depthFactor = Math.sin(angle); // +1=front, -1=back
 
-      // Normalized 0→1 (0=back, 1=front)
-      const depthNorm = clamp((depthFactor + 1) * 0.5, 0, 1);
+      // Normalized 0→1 (0=back, 1=front), then apply power curve
+      // dPow > 1 = steeper falloff → only front cards prominent
+      const depthLinear = clamp((depthFactor + 1) * 0.5, 0, 1);
+      const depthNorm = dPow === 1 ? depthLinear : Math.pow(depthLinear, dPow);
 
       // --- Position on ellipse (use cached card dimensions) ---------------
       const posX = cx + rX * Math.cos(angle) - card.width / 2;
