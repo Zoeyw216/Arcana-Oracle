@@ -1140,7 +1140,7 @@ body::before {
 @media (max-width: 480px) {
   :root {
     --container-padding: 40px 20px;
-    --section-gap: 16px;
+    --section-gap: 24px;
   }
 
   /* Vertically center visible content on mobile */
@@ -1151,7 +1151,7 @@ body::before {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 24px 20px;
+    padding: 24px 28px;
   }
 
   /* Hide inactive areas so they don't consume flex space */
@@ -1163,20 +1163,20 @@ body::before {
     font-size: 15px;
   }
 
-  /* Compact header */
+  /* Header — generous spacing below */
   .oracle-icon svg {
     width: 48px;
     height: 48px;
   }
 
   .header {
-    margin-bottom: 8px;
+    margin-bottom: 28px;
   }
 
   .header h1 {
     font-size: 1.5em;
     letter-spacing: 2px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   .header .subtitle {
@@ -1186,24 +1186,24 @@ body::before {
 
   .header::after {
     width: 80px;
-    margin-top: 12px;
-    margin-bottom: 12px;
+    margin-top: 14px;
+    margin-bottom: 0;
   }
 
   .moon {
     font-size: 2.4em;
   }
 
-  /* Question area */
+  /* Question area — shorter input, more breathing room */
   .question-section {
-    margin-bottom: 12px;
-    width: 100%;
+    margin-bottom: 20px;
+    width: 85%;
   }
 
   .question-section label {
     font-size: 0.88em;
     letter-spacing: 1px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .question-input {
