@@ -1167,6 +1167,18 @@ body::before {
     overflow: hidden;
   }
 
+  /* Unlock scrolling when results are visible */
+  body.results-active {
+    overflow: auto;
+    overflow: overlay;
+  }
+
+  body.results-active .container {
+    max-height: none;
+    overflow: visible;
+    justify-content: flex-start;
+  }
+
   /* Header — generous spacing below */
   .oracle-icon svg {
     width: 52px;

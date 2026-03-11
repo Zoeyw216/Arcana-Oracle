@@ -666,7 +666,7 @@ function showResults() {
   cardsRow.innerHTML = '';
   drawnCards.forEach((card, i) => {
     const wrapper = document.createElement('div');
-    wrapper.className = 'card-wrapper fade-in-up';
+    wrapper.className = 'card-wrapper card-wrapper--reading fade-in-up';
     wrapper.style.animationDelay = (i * 0.2) + 's';
 
     const label = document.createElement('div');
@@ -707,8 +707,9 @@ function showResults() {
     }, 800 + i * 600);
   });
 
-  // Show results container
+  // Show results container & unlock scrolling on mobile
   results.classList.add('show');
+  document.body.classList.add('results-active');
 
   // Scroll to results
   setTimeout(() => {
@@ -1046,6 +1047,7 @@ async function generateInterpretation(question, container) {
 
   const textEl = container.querySelector('.streaming-text');
   let fullText = '';
+  let scrollPending = false;
 
   await geminiReader.getReading({
     question,
@@ -1054,7 +1056,14 @@ async function generateInterpretation(question, container) {
     onToken: (token) => {
       fullText += token;
       textEl.innerHTML = formatText(fullText) + '<span class="cursor-blink">|</span>';
-      container.scrollTop = container.scrollHeight;
+      // Throttle scroll to once per frame to avoid jank
+      if (!scrollPending) {
+        scrollPending = true;
+        requestAnimationFrame(() => {
+          textEl.scrollIntoView({ behavior: 'instant', block: 'end' });
+          scrollPending = false;
+        });
+      }
     },
     onComplete: () => {
       textEl.innerHTML = formatText(fullText);
@@ -1119,6 +1128,7 @@ function resetAll() {
   document.getElementById('drawBtn')?.classList.remove('hidden');
   document.getElementById('results')?.classList.remove('show');
   document.getElementById('deckArea')?.classList.remove('show');
+  document.body.classList.remove('results-active');
   dismissHint(true); // force — full reset
 
   const input = document.getElementById('questionInput');
