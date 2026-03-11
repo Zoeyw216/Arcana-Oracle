@@ -132,7 +132,8 @@ async function initHandTracking() {
     console.error('Hand tracking init failed:', err);
     useHandTracking = false;
     handTracker = null;
-    showNotification('手势追踪初始化失败: ' + (err.message || '未知错误'));
+    showDeckHint(false); // Fall back to click hint
+    showNotification('手势追踪初始化失败，已切换到点击模式');
   } finally {
     if (loadingEl) loadingEl.classList.remove('show');
   }
@@ -456,7 +457,7 @@ function showDeckHint(isHandMode) {
     : '凭直觉，点选3张牌';
   hint.style.whiteSpace = 'pre-line';
   // Show after a brief delay for modal to close
-  const duration = isHandMode ? 6000 : 4000;
+  const duration = isHandMode ? 10000 : 4000;
   requestAnimationFrame(() => {
     hint.classList.add('show');
     setTimeout(() => {
