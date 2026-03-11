@@ -466,12 +466,12 @@ function showDeckHint(isHandMode) {
   requestAnimationFrame(() => {
     hint.classList.add('show');
     if (isHandMode) {
-      // Protect hint for 10 seconds — cannot be removed by any code path
-      _hintProtectedUntil = Date.now() + 10000;
+      // Protect hint for 15 seconds — cannot be removed by any code path
+      _hintProtectedUntil = Date.now() + 15000;
       setTimeout(() => {
         hint.classList.add('fade-out');
         setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-      }, 10000);
+      }, 15000);
     } else {
       _hintProtectedUntil = 0;
       setTimeout(() => {
