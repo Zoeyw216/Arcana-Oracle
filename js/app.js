@@ -1,5 +1,5 @@
 import { majorArcana } from './cards-data.js';
-import { renderCard, renderCardBack } from './card-renderer.js';
+import { renderCard, renderCardBack, getCardBackImageUrl } from './card-renderer.js';
 import { AnimationEngine } from './animation-engine.js';
 import { HandTracker } from './hand-tracker.js';
 import { GeminiReader } from './gemini-reader.js';
@@ -511,7 +511,7 @@ function shuffleArray(arr) {
 
 let shuffledDeck = []; // pre-shuffled deck for current draw
 
-function showFloatingDeck() {
+async function showFloatingDeck() {
   const deckArea = document.getElementById('deckArea');
   if (!deckArea) return;
   deckArea.innerHTML = '';
@@ -532,6 +532,9 @@ function showFloatingDeck() {
   // Create animation engine
   animEngine = new AnimationEngine(deckArea);
 
+  // Pre-render card back to a shared image (avoids 22× complex SVG DOMs)
+  const backImgUrl = await getCardBackImageUrl();
+
   // Create floating cards (all 22 Major Arcana, shuffled)
   const cardCount = shuffledDeck.length;
   for (let i = 0; i < cardCount; i++) {
@@ -539,8 +542,14 @@ function showFloatingDeck() {
     cardEl.className = 'floating-card';
     cardEl.dataset.index = i;
 
-    // Render card back
-    renderCardBack(cardEl);
+    // Use pre-rendered image instead of full SVG DOM
+    if (backImgUrl) {
+      cardEl.style.backgroundImage = `url(${backImgUrl})`;
+      cardEl.style.backgroundSize = 'cover';
+      cardEl.style.borderRadius = getComputedStyle(cardEl).borderRadius;
+    } else {
+      renderCardBack(cardEl);
+    }
 
     // Click handler
     cardEl.addEventListener('click', () => {

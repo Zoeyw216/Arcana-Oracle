@@ -703,3 +703,36 @@ export function renderCardBack(container) {
   container.appendChild(wrapper);
   return wrapper;
 }
+
+/**
+ * Pre-render card back SVG to a data URL (rasterized image).
+ * Call once, then reuse the returned URL for all floating cards
+ * to avoid 22× complex SVG DOMs in the orbit animation.
+ */
+let _cardBackDataUrl = null;
+export async function getCardBackImageUrl() {
+  if (_cardBackDataUrl) return _cardBackDataUrl;
+
+  const svgString = buildCardBackSVG();
+  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = CARD_W * 2;   // 2× for retina
+      canvas.height = CARD_H * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      _cardBackDataUrl = canvas.toDataURL('image/png');
+      resolve(_cardBackDataUrl);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null); // fallback: caller should use renderCardBack
+    };
+    img.src = url;
+  });
+}
