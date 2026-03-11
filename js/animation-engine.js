@@ -183,8 +183,8 @@ export class AnimationEngine {
       this._depthZ = 80;
       // Power curve makes depth drop steeply behind the front row
       this._depthPower = 1.8;
-      // Faster orbit so rotation is clearly visible on identical card backs
-      this._speedMult = 2.0;
+      // Moderate orbit so rotation is visible but not dizzying
+      this._speedMult = 1.5;
       this.container.style.perspective = '600px';
     } else {
       // --- Desktop gentle ring ---

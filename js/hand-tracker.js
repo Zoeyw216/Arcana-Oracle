@@ -5,9 +5,9 @@ import { FilesetResolver, HandLandmarker } from '../assets/mediapipe/vision_bund
 
 const FINGERTIP_INDICES = [4, 8, 12, 16, 20]; // thumb, index, middle, ring, pinky tips
 const PALM_CENTER_INDEX = 9; // middle finger MCP as palm proxy
-const GRAB_THRESHOLD = 0.11; // normalized distance threshold for grab detection
-const GRAB_DEBOUNCE_MS = 400;
-const GRAB_CONFIRM_FRAMES = 3; // require grab detected for N consecutive frames before firing
+const GRAB_THRESHOLD = 0.14; // normalized distance threshold for grab detection (relaxed for mobile)
+const GRAB_DEBOUNCE_MS = 350;
+const GRAB_CONFIRM_FRAMES = 2; // require grab detected for N consecutive frames before firing
 const SMOOTHING = 0.35; // cursor position smoothing factor (0 = no smooth, 1 = max smooth)
 
 export class HandTracker {
