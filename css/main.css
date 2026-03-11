@@ -1300,13 +1300,13 @@ body::before {
 
   /* Hand cursor — smaller on mobile */
   .hand-cursor {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
   }
 
   .hand-cursor::before {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
 
   /* Webcam PiP */

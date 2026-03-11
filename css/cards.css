@@ -747,6 +747,12 @@
 }
 
 @media (max-width: 480px) {
+  .floating-card {
+    width: 50px;
+    height: 78px;
+    border-radius: 5px;
+  }
+
   .card-wrapper {
     width: 150px;
   }

@@ -173,16 +173,16 @@ export class AnimationEngine {
     if (this._isMobile) {
       // --- Mobile 3D carousel ---
       // Wider ellipse for horizontal spread, very flat vertically
-      this.radiusX = this._cw * 0.42;
-      this.radiusY = 22;
+      this.radiusX = this._cw * 0.55;
+      this.radiusY = 40;
       // Aggressive depth: only front 2-3 cards fully visible
-      this._scaleMin = 0.12;
+      this._scaleMin = 0.25;
       this._scaleMax = 1.0;
       this._opacityMin = 0.0;
       this._opacityMax = 1.0;
       this._depthZ = 80;
       // Power curve makes depth drop steeply behind the front row
-      this._depthPower = 2.5;
+      this._depthPower = 1.8;
       // Faster orbit so rotation is clearly visible on identical card backs
       this._speedMult = 2.0;
       this.container.style.perspective = '600px';

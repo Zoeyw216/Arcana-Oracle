@@ -193,7 +193,7 @@ function handleRelease() {
 
 function getCardAtPosition(x, y) {
   const cards = document.querySelectorAll('.floating-card:not(.picked)');
-  const PAD = window.innerWidth <= 480 ? 12 : 25;
+  const PAD = window.innerWidth <= 480 ? 10 : 25;
   let best = null;
   let bestDist = Infinity;
   for (const card of cards) {
