@@ -140,6 +140,23 @@ async function initHandTracking() {
 }
 
 let handHintDismissed = false;
+let handHintShownAt = 0; // timestamp when hand hint was shown
+
+function dismissHandHint() {
+  if (handHintDismissed) return;
+  const hint = document.getElementById('deckHint');
+  if (!hint || !hint.classList.contains('show')) return;
+  // Ensure hint is visible for at least 3 seconds
+  const elapsed = Date.now() - handHintShownAt;
+  const minDisplay = 3000;
+  if (elapsed < minDisplay) {
+    setTimeout(dismissHandHint, minDisplay - elapsed);
+    return;
+  }
+  handHintDismissed = true;
+  hint.classList.add('fade-out');
+  setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
+}
 
 function handleHandMove({ x, y, visible, grabbing }) {
   if (!handCursorEl) return;
@@ -150,12 +167,7 @@ function handleHandMove({ x, y, visible, grabbing }) {
   }
   // Dismiss hand hint on first detection of open palm
   if (!handHintDismissed && !grabbing) {
-    handHintDismissed = true;
-    const hint = document.getElementById('deckHint');
-    if (hint && hint.classList.contains('show')) {
-      hint.classList.add('fade-out');
-      setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-    }
+    dismissHandHint();
   }
   handCursorEl.style.opacity = '1';
   handCursorEl.style.left = x + 'px';
@@ -472,6 +484,8 @@ function showDeckHint(isHandMode) {
     hint.classList.add('show');
     if (isHandMode) {
       // Hand mode: hint stays until hand is detected (dismissed in handleHandMove)
+      handHintShownAt = Date.now();
+      handHintDismissed = false;
     } else {
       setTimeout(() => {
         hint.classList.add('fade-out');
