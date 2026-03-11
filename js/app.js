@@ -139,35 +139,12 @@ async function initHandTracking() {
   }
 }
 
-let handHintDismissed = false;
-let handHintShownAt = 0; // timestamp when hand hint was shown
-
-function dismissHandHint() {
-  if (handHintDismissed) return;
-  const hint = document.getElementById('deckHint');
-  if (!hint || !hint.classList.contains('show')) return;
-  // Ensure hint is visible for at least 3 seconds
-  const elapsed = Date.now() - handHintShownAt;
-  const minDisplay = 3000;
-  if (elapsed < minDisplay) {
-    setTimeout(dismissHandHint, minDisplay - elapsed);
-    return;
-  }
-  handHintDismissed = true;
-  hint.classList.add('fade-out');
-  setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-}
-
 function handleHandMove({ x, y, visible, grabbing }) {
   if (!handCursorEl) return;
   if (!visible) {
     handCursorEl.style.opacity = '0';
     if (animEngine && phase === 'deck') animEngine.setOrbitSpeed(0.05);
     return;
-  }
-  // Dismiss hand hint on first detection of open palm
-  if (!handHintDismissed && !grabbing) {
-    dismissHandHint();
   }
   handCursorEl.style.opacity = '1';
   handCursorEl.style.left = x + 'px';
@@ -483,9 +460,7 @@ function showDeckHint(isHandMode) {
   requestAnimationFrame(() => {
     hint.classList.add('show');
     if (isHandMode) {
-      // Hand mode: hint stays until hand is detected (dismissed in handleHandMove)
-      handHintShownAt = Date.now();
-      handHintDismissed = false;
+      // Hand mode: hint stays until first card is picked (dismissed in pickCard)
     } else {
       setTimeout(() => {
         hint.classList.add('fade-out');
@@ -586,6 +561,13 @@ function pickCard(cardEl) {
   cardEl.style.pointerEvents = 'none';
   cardEl.style.zIndex = '999';
   pickCount++;
+
+  // Dismiss hint on first pick
+  const hint = document.getElementById('deckHint');
+  if (hint && hint.classList.contains('show')) {
+    hint.classList.add('fade-out');
+    setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
+  }
 
   // Get the pre-assigned card from the shuffled deck
   const idx = parseInt(cardEl.dataset.index, 10);
@@ -1091,7 +1073,6 @@ function resetAll() {
   generatedImageDataUrl = null;
   shuffledDeck = [];
   pickAnimating = false;
-  handHintDismissed = false;
 
   if (animEngine) {
     animEngine.stop();
