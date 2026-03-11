@@ -139,12 +139,23 @@ async function initHandTracking() {
   }
 }
 
+let handHintDismissed = false;
+
 function handleHandMove({ x, y, visible, grabbing }) {
   if (!handCursorEl) return;
   if (!visible) {
     handCursorEl.style.opacity = '0';
     if (animEngine && phase === 'deck') animEngine.setOrbitSpeed(0.05);
     return;
+  }
+  // Dismiss hand hint on first detection of open palm
+  if (!handHintDismissed && !grabbing) {
+    handHintDismissed = true;
+    const hint = document.getElementById('deckHint');
+    if (hint && hint.classList.contains('show')) {
+      hint.classList.add('fade-out');
+      setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
+    }
   }
   handCursorEl.style.opacity = '1';
   handCursorEl.style.left = x + 'px';
@@ -457,13 +468,16 @@ function showDeckHint(isHandMode) {
     : '凭直觉，点选3张牌';
   hint.style.whiteSpace = 'pre-line';
   // Show after a brief delay for modal to close
-  const duration = isHandMode ? 10000 : 4000;
   requestAnimationFrame(() => {
     hint.classList.add('show');
-    setTimeout(() => {
-      hint.classList.add('fade-out');
-      setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
-    }, duration);
+    if (isHandMode) {
+      // Hand mode: hint stays until hand is detected (dismissed in handleHandMove)
+    } else {
+      setTimeout(() => {
+        hint.classList.add('fade-out');
+        setTimeout(() => { hint.classList.remove('show', 'fade-out'); }, 600);
+      }, 4000);
+    }
   });
 }
 
@@ -1063,6 +1077,7 @@ function resetAll() {
   generatedImageDataUrl = null;
   shuffledDeck = [];
   pickAnimating = false;
+  handHintDismissed = false;
 
   if (animEngine) {
     animEngine.stop();
