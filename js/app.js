@@ -560,9 +560,8 @@ async function showFloatingDeck() {
     animEngine.addCard(cardEl, i, cardCount);
   }
 
-  // Click mode: user drags to rotate, no auto-rotation
+  // Click mode: auto-rotate + user can drag to control
   if (!useHandTracking) {
-    animEngine.setAutoRotate(false);
     animEngine.enableDrag();
   }
 

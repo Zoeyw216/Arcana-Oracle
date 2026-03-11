@@ -364,8 +364,8 @@ export class AnimationEngine {
       if (!this._dragging) return;
       const dx = x - this._dragLastX;
       this._dragLastX = x;
-      // Rotate all cards by delta
-      const dAngle = dx * this._dragSensitivity;
+      // Rotate all cards by delta (negate so swipe-right = rotate-right)
+      const dAngle = -dx * this._dragSensitivity;
       for (const card of this.cards) {
         if (!card.selecting) {
           card.baseAngle += dAngle;
