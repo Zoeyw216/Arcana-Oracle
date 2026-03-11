@@ -591,8 +591,8 @@ function pickCard(cardEl) {
   cardEl.style.zIndex = '999';
   pickCount++;
 
-  // Dismiss hint on first pick (respects hand-mode lock)
-  dismissHint();
+  // Dismiss hint on first pick — always force, even during hand-mode lock
+  dismissHint(true);
 
   // Get the pre-assigned card from the shuffled deck
   const idx = parseInt(cardEl.dataset.index, 10);
