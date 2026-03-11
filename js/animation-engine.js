@@ -1,11 +1,12 @@
 /**
  * AnimationEngine - 3D floating card animation for a tarot card web app.
  *
- * Cards orbit along an elliptical path, bob vertically, wobble gently,
- * and can be selected (fly to a target position) or highlighted on hover.
+ * Cards orbit along an elliptical path with true 3D depth.
+ * On mobile, the ring is tighter and more dramatic — back cards
+ * shrink and hide behind the front row for a carousel feel.
  *
- * All transforms use translate3d / rotateX / rotateY / rotateZ for GPU
- * acceleration.  A single requestAnimationFrame loop drives every card.
+ * All transforms use translate3d / scale for GPU acceleration.
+ * A single requestAnimationFrame loop drives every card.
  *
  * Performance-optimised: dimensions cached, style writes minimised,
  * zero per-frame allocation.
@@ -116,10 +117,19 @@ export class AnimationEngine {
     this._cx = this._cw / 2;
     this._cy = this._ch / 2;
 
-    // Ellipse radii – computed from container
+    // Ellipse radii
     this.radiusX = 0;
     this.radiusY = 0;
-    this._updateRadii();
+
+    // Depth rendering parameters (adjusted per viewport)
+    this._scaleMin = 0.55;
+    this._scaleMax = 1.0;
+    this._opacityMin = 0.55;
+    this._opacityMax = 1.0;
+    this._depthZ = 40;
+    this._isMobile = false;
+
+    this._updateLayout();
 
     // Global orbit speed (radians / second)
     this.orbitSpeed = 0.8;
@@ -142,15 +152,46 @@ export class AnimationEngine {
       this._ch = this.container.clientHeight;
       this._cx = this._cw / 2;
       this._cy = this._ch / 2;
-      this._updateRadii();
+      this._updateLayout();
     });
     this._resizeObserver.observe(this.container);
   }
 
-  /** Recompute ellipse radii from cached container size. */
-  _updateRadii() {
-    this.radiusX = Math.min(this._cw * 0.42, 480);
-    this.radiusY = Math.min(this._ch * 0.15, 120);
+  /**
+   * Recompute ellipse radii + depth parameters based on viewport.
+   *
+   * Mobile (≤ 480px): tight flat ring with dramatic depth —
+   *   back cards shrink to ~25% and fade to 0, hiding behind front row.
+   *
+   * Desktop: gentle ring with subtle depth.
+   */
+  _updateLayout() {
+    this._isMobile = this._cw <= 480;
+
+    if (this._isMobile) {
+      // --- Mobile 3D carousel ---
+      // Flatter ellipse so front & back rows overlap vertically
+      this.radiusX = this._cw * 0.36;
+      this.radiusY = 28;
+      // Dramatic depth: back cards tiny & invisible
+      this._scaleMin = 0.25;
+      this._scaleMax = 1.0;
+      this._opacityMin = 0.0;
+      this._opacityMax = 1.0;
+      this._depthZ = 60;
+      // Closer perspective for stronger 3D on mobile
+      this.container.style.perspective = '600px';
+    } else {
+      // --- Desktop gentle ring ---
+      this.radiusX = Math.min(this._cw * 0.42, 480);
+      this.radiusY = Math.min(this._ch * 0.15, 120);
+      this._scaleMin = 0.55;
+      this._scaleMax = 1.0;
+      this._opacityMin = 0.55;
+      this._opacityMax = 1.0;
+      this._depthZ = 40;
+      this.container.style.perspective = '1200px';
+    }
   }
 
   // -----------------------------------------------------------------------
@@ -305,6 +346,15 @@ export class AnimationEngine {
     const cx = this._cx;
     const cy = this._cy;
 
+    // Cache depth parameters as locals for hot loop
+    const sMin = this._scaleMin;
+    const sRange = this._scaleMax - this._scaleMin;
+    const oMin = this._opacityMin;
+    const oRange = this._opacityMax - this._opacityMin;
+    const dZ = this._depthZ;
+    const rX = this.radiusX;
+    const rY = this.radiusY;
+
     const cards = this.cards;
     const len = cards.length;
     for (let i = 0; i < len; i++) {
@@ -322,16 +372,17 @@ export class AnimationEngine {
       const angle = card.currentAngle;
       const depthFactor = Math.sin(angle); // +1=front, -1=back
 
+      // Normalized 0→1 (0=back, 1=front)
+      const depthNorm = clamp((depthFactor + 1) * 0.5, 0, 1);
+
       // --- Position on ellipse (use cached card dimensions) ---------------
-      const posX = cx + this.radiusX * Math.cos(angle) - card.width / 2;
-      const posY = cy + this.radiusY * Math.sin(angle) - card.height / 2;
-      const posZ = 40 * depthFactor;
+      const posX = cx + rX * Math.cos(angle) - card.width / 2;
+      const posY = cy + rY * Math.sin(angle) - card.height / 2;
+      const posZ = dZ * depthFactor;
 
-      // --- Scale by depth: front cards full size, back cards smaller ---
-      const scaleVal = 0.55 + 0.45 * clamp((depthFactor + 1) * 0.5, 0, 1);
-
-      // --- Opacity: front cards opaque, back cards faded ---
-      const opacityVal = 0.55 + 0.45 * clamp((depthFactor + 1) * 0.5, 0, 1);
+      // --- Scale & opacity by depth ---------------------------------------
+      const scaleVal = sMin + sRange * depthNorm;
+      const opacityVal = oMin + oRange * depthNorm;
 
       // --- Apply transform + opacity in one write -------------------------
       card.el.style.transform =
