@@ -560,28 +560,10 @@ async function showFloatingDeck() {
     animEngine.addCard(cardEl, i, cardCount);
   }
 
-  // Mouse hover slow-down for click mode
+  // Click mode: user drags to rotate, no auto-rotation
   if (!useHandTracking) {
-    let hoveringCard = false;
-    deckArea.addEventListener('mousemove', (e) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      const card = el?.closest('.floating-card:not(.picked)');
-      if (card && card.style.pointerEvents !== 'none') {
-        if (!hoveringCard) {
-          hoveringCard = true;
-          animEngine?.setOrbitSpeed(0.05);
-        }
-      } else {
-        if (hoveringCard) {
-          hoveringCard = false;
-          animEngine?.setOrbitSpeed(0.8);
-        }
-      }
-    });
-    deckArea.addEventListener('mouseleave', () => {
-      hoveringCard = false;
-      animEngine?.setOrbitSpeed(0.8);
-    });
+    animEngine.setAutoRotate(false);
+    animEngine.enableDrag();
   }
 
   animEngine.start();

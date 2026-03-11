@@ -145,6 +145,15 @@ export class AnimationEngine {
     this._hoverX = 0;
     this._hoverY = 0;
 
+    // Touch/mouse drag control
+    this._dragging = false;
+    this._dragLastX = 0;
+    this._dragVelocity = 0;        // inertia velocity (rad/s)
+    this._friction = 0.92;          // per-frame decay factor
+    this._dragSensitivity = 0.008;  // px → radians
+    this._autoRotate = true;        // false in click mode (user drags)
+    this._dragEnabled = false;
+
     // Bind once so we can cancel
     this._tick = this._tick.bind(this);
 
@@ -332,6 +341,70 @@ export class AnimationEngine {
     this.orbitSpeed = speed;
   }
 
+  setAutoRotate(enabled) {
+    this._autoRotate = enabled;
+  }
+
+  /**
+   * Enable touch/mouse drag to rotate the orbit manually.
+   * Adds event listeners to the container.
+   */
+  enableDrag() {
+    if (this._dragEnabled) return;
+    this._dragEnabled = true;
+    const c = this.container;
+
+    const onStart = (x) => {
+      this._dragging = true;
+      this._dragLastX = x;
+      this._dragVelocity = 0;
+    };
+
+    const onMove = (x) => {
+      if (!this._dragging) return;
+      const dx = x - this._dragLastX;
+      this._dragLastX = x;
+      // Rotate all cards by delta
+      const dAngle = dx * this._dragSensitivity;
+      for (const card of this.cards) {
+        if (!card.selecting) {
+          card.baseAngle += dAngle;
+          card.currentAngle += dAngle;
+        }
+      }
+      // Track velocity for inertia (use recent delta as instantaneous speed)
+      this._dragVelocity = dAngle * 60; // approximate rad/s at 60fps
+    };
+
+    const onEnd = () => {
+      this._dragging = false;
+    };
+
+    // Touch events
+    c.addEventListener('touchstart', (e) => {
+      onStart(e.touches[0].clientX);
+    }, { passive: true });
+
+    c.addEventListener('touchmove', (e) => {
+      onMove(e.touches[0].clientX);
+    }, { passive: true });
+
+    c.addEventListener('touchend', onEnd, { passive: true });
+    c.addEventListener('touchcancel', onEnd, { passive: true });
+
+    // Mouse events (desktop fallback)
+    c.addEventListener('mousedown', (e) => {
+      onStart(e.clientX);
+    });
+
+    c.addEventListener('mousemove', (e) => {
+      onMove(e.clientX);
+    });
+
+    c.addEventListener('mouseup', onEnd);
+    c.addEventListener('mouseleave', onEnd);
+  }
+
   // -----------------------------------------------------------------------
   // Internal – animation loop
   // -----------------------------------------------------------------------
@@ -348,6 +421,12 @@ export class AnimationEngine {
     }
     const dt = (timestamp - this._lastTimestamp) / 1000; // seconds
     this._lastTimestamp = timestamp;
+
+    // --- Inertia decay (outside card loop) --------------------------------
+    if (!this._dragging && Math.abs(this._dragVelocity) > 0.001) {
+      this._dragVelocity *= Math.pow(this._friction, dt * 60);
+      if (Math.abs(this._dragVelocity) < 0.001) this._dragVelocity = 0;
+    }
 
     // Use cached container centre (updated by ResizeObserver)
     const cx = this._cx;
@@ -377,7 +456,15 @@ export class AnimationEngine {
 
       // --- Orbit angle progression ----------------------------------------
       card.currentAngle = lerp(card.currentAngle, card.baseAngle, 0.03);
-      card.baseAngle += this.orbitSpeed * sMult * dt;
+      if (this._dragging) {
+        // Dragging: angle controlled directly by touchmove, no auto-advance
+      } else if (Math.abs(this._dragVelocity) > 0.001) {
+        // Inertia coast
+        card.baseAngle += this._dragVelocity * dt;
+      } else if (this._autoRotate) {
+        // Auto rotation (hand-gesture mode or default)
+        card.baseAngle += this.orbitSpeed * sMult * dt;
+      }
 
       const angle = card.currentAngle;
       const depthFactor = Math.sin(angle); // +1=front, -1=back
