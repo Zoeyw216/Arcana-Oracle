@@ -39,7 +39,7 @@
 
   /* Spacing */
   --container-max: 1200px;
-  --container-padding: 40px 24px;
+  --container-padding: 80px 24px 40px;
   --section-gap: 40px;
 
   /* Borders */
