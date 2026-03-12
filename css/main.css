@@ -1796,7 +1796,9 @@ body::before {
 .follow-up {
   max-width: 780px;
   margin: 20px auto 0;
-  padding: 0 44px;
+  padding: 0 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 .follow-up-input-row {
   display: flex;
@@ -1805,6 +1807,7 @@ body::before {
 }
 .follow-up-input-row input {
   flex: 1;
+  min-width: 0;
   padding: 12px 20px;
   border: 1px solid rgba(155, 139, 116, 0.2);
   border-radius: 28px;
