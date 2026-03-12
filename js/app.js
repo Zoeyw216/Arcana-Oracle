@@ -776,12 +776,14 @@ async function generateImage() {
     const bgColor = '#f7f4ef';
     const accentColor = '#9b8b74';
 
+    // Only show the original 3 cards (not supplementary draws)
+    const mainCards = drawnCards.slice(0, 3);
+
     // Pre-load card face images from the actual rendered card elements
     const cardsRow = document.getElementById('cardsRow');
     const renderedImages = cardsRow ? cardsRow.querySelectorAll('image[href]') : [];
-    const cardImages = await Promise.all(drawnCards.map((card, i) => {
+    const cardImages = await Promise.all(mainCards.map((card, i) => {
       return new Promise(resolve => {
-        // Get the actual href from the rendered SVG <image> element
         const svgImage = renderedImages[i];
         const href = svgImage?.getAttribute('href');
         if (!href) { resolve(null); return; }
@@ -793,19 +795,20 @@ async function generateImage() {
       });
     }));
 
-    // Get interpretation text
+    // Get all interpretation + follow-up text with paragraph structure
     const interpEl = document.getElementById('interpretation');
-    const interpText = interpEl ? interpEl.textContent.replace('解读', '').trim() : '';
+    const fullText = extractReadingText(interpEl);
 
-    // Calculate text block height for interpretation
+    // Calculate text block height
     const canvas = document.createElement('canvas');
     canvas.width = W;
     const ctx = canvas.getContext('2d');
-    ctx.font = `${14 * scale}px "Noto Serif SC", serif`;
     const textMaxW = W - margin * 2;
-    const wrappedLines = wrapText(ctx, interpText, textMaxW);
     const lineH = 22 * scale;
-    const interpBlockH = wrappedLines.length * lineH;
+    const paraGap = 12 * scale;
+    const sectionGap = 24 * scale;
+    const textBlocks = layoutTextBlocks(ctx, fullText, textMaxW, scale);
+    const interpBlockH = measureTextBlocksHeight(textBlocks, lineH, paraGap, sectionGap);
 
     // Total height calculation
     const titleAreaH = 80 * scale;
@@ -841,11 +844,11 @@ async function generateImage() {
 
     // Cards
     y += 24 * scale;
-    const totalCardsW = drawnCards.length * cardW + (drawnCards.length - 1) * cardGap;
+    const totalCardsW = mainCards.length * cardW + (mainCards.length - 1) * cardGap;
     let cardX = (W - totalCardsW) / 2;
 
-    for (let i = 0; i < drawnCards.length; i++) {
-      const card = drawnCards[i];
+    for (let i = 0; i < mainCards.length; i++) {
+      const card = mainCards[i];
       const cx = cardX + i * (cardW + cardGap);
 
       // Label above card
@@ -898,14 +901,10 @@ async function generateImage() {
       ctx.fillText(card.name + reversedMark, cx + cardW / 2, nameY);
     }
 
-    // Interpretation text
+    // Interpretation text with paragraph layout
     y += cardsAreaH + spacer;
-    ctx.fillStyle = textColor;
-    ctx.font = `${14 * scale}px "Noto Serif SC", serif`;
     ctx.textAlign = 'left';
-    for (let i = 0; i < wrappedLines.length; i++) {
-      ctx.fillText(wrappedLines[i], margin, y + i * lineH);
-    }
+    y = renderTextBlocks(ctx, textBlocks, margin, y, lineH, paraGap, sectionGap, textColor, accentColor, scale);
 
     // Footer
     const footerY = totalH - 30 * scale;
@@ -944,6 +943,118 @@ function wrapText(ctx, text, maxWidth) {
     if (line) lines.push(line);
   }
   return lines;
+}
+
+/**
+ * Extract structured text from interpretation element, including follow-up conversations.
+ * Returns array of sections: { type: 'reading'|'question'|'cards'|'reply', text: string }
+ */
+function extractReadingText(interpEl) {
+  if (!interpEl) return [];
+  const sections = [];
+  const children = interpEl.children;
+
+  for (let i = 0; i < children.length; i++) {
+    const el = children[i];
+    const cls = el.className || '';
+
+    if (cls.includes('follow-up-divider')) {
+      continue; // skip dividers
+    } else if (cls.includes('follow-up-question')) {
+      sections.push({ type: 'question', text: el.textContent.trim() });
+    } else if (cls.includes('follow-up-new-cards')) {
+      sections.push({ type: 'cards', text: el.textContent.trim() });
+    } else if (cls.includes('streaming-text') || el.tagName === 'DIV') {
+      // Main reading or follow-up reply — extract paragraphs from <p> tags
+      const paragraphs = el.querySelectorAll('p');
+      if (paragraphs.length > 0) {
+        const text = Array.from(paragraphs).map(p => p.textContent.trim()).filter(Boolean).join('\n\n');
+        const type = sections.length === 0 ? 'reading' : 'reply';
+        sections.push({ type, text });
+      } else {
+        const text = el.textContent.trim();
+        if (text) {
+          const type = sections.length === 0 ? 'reading' : 'reply';
+          sections.push({ type, text });
+        }
+      }
+    } else if (el.tagName === 'H3') {
+      // Skip "解读中..." heading
+      continue;
+    }
+  }
+  return sections;
+}
+
+/**
+ * Layout text blocks: wrap each section's text and tag with type for rendering.
+ */
+function layoutTextBlocks(ctx, sections, maxWidth, scale) {
+  const blocks = [];
+  for (const section of sections) {
+    ctx.font = section.type === 'question'
+      ? `italic ${13 * scale}px "Noto Serif SC", serif`
+      : `${14 * scale}px "Noto Serif SC", serif`;
+    const lines = wrapText(ctx, section.text, maxWidth);
+    blocks.push({ type: section.type, lines });
+  }
+  return blocks;
+}
+
+function measureTextBlocksHeight(blocks, lineH, paraGap, sectionGap) {
+  let h = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    if (i > 0) h += sectionGap;
+    const block = blocks[i];
+    for (let j = 0; j < block.lines.length; j++) {
+      if (block.lines[j] === '') {
+        h += paraGap; // paragraph break
+      } else {
+        h += lineH;
+      }
+    }
+  }
+  return h;
+}
+
+function renderTextBlocks(ctx, blocks, x, startY, lineH, paraGap, sectionGap, textColor, accentColor, scale) {
+  let y = startY;
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    if (i > 0) y += sectionGap;
+
+    if (block.type === 'question') {
+      // Draw a subtle divider line before the question
+      ctx.save();
+      ctx.strokeStyle = accentColor;
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 1 * scale;
+      ctx.beginPath();
+      ctx.moveTo(x, y - sectionGap / 2);
+      ctx.lineTo(x + 40 * scale, y - sectionGap / 2);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = accentColor;
+      ctx.font = `italic ${13 * scale}px "Noto Serif SC", serif`;
+    } else if (block.type === 'cards') {
+      ctx.fillStyle = accentColor;
+      ctx.font = `${13 * scale}px "Noto Serif SC", serif`;
+    } else {
+      ctx.fillStyle = textColor;
+      ctx.font = `${14 * scale}px "Noto Serif SC", serif`;
+    }
+
+    for (const line of block.lines) {
+      if (line === '') {
+        y += paraGap;
+      } else {
+        ctx.fillText(line, x, y);
+        y += lineH;
+      }
+    }
+  }
+  return y;
 }
 
 function drawRoundedRect(ctx, x, y, w, h, r) {
@@ -1186,21 +1297,23 @@ async function handleFollowUpDraw(count, container) {
   input.disabled = true;
   sendBtn.disabled = true;
 
-  // Show the full floating deck with remaining cards
-  const deckArea = document.getElementById('deckArea');
-  deckArea.innerHTML = '';
-  deckArea.classList.add('show');
+  // Use the full-screen overlay for supplementary draw
+  const overlay = document.getElementById('deckOverlay');
+  const overlayArea = document.getElementById('deckOverlayArea');
+  const overlayHint = document.getElementById('deckOverlayHint');
+  overlayArea.innerHTML = '';
+  overlayHint.textContent = `请选择 ${count} 张补充牌`;
 
-  // Show hint
-  showDeckHint(false);
-  const hintEl = document.getElementById('deckHint');
-  if (hintEl) hintEl.textContent = `请选择 ${count} 张补充牌`;
+  // Show overlay with fade-in
+  overlay.style.display = 'flex';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('show'));
+  });
 
-  // Create animation engine for the supplementary draw
-  animEngine = new AnimationEngine(deckArea);
+  // Create animation engine inside overlay area
+  animEngine = new AnimationEngine(overlayArea);
   const backImgUrl = await getCardBackImageUrl();
 
-  // Re-index available cards for the orbit
   const cardCount = available.length;
   for (let i = 0; i < cardCount; i++) {
     const cardEl = document.createElement('div');
@@ -1215,22 +1328,19 @@ async function handleFollowUpDraw(count, container) {
       renderCardBack(cardEl);
     }
 
-    deckArea.appendChild(cardEl);
+    overlayArea.appendChild(cardEl);
     animEngine.addCard(cardEl, i, cardCount);
   }
 
   animEngine.enableDrag();
   animEngine.start();
 
-  // Scroll to deck
-  requestAnimationFrame(() => deckArea.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-
   // Wait for user to pick `count` cards via click
   const newCards = await new Promise((resolve) => {
     const picked = [];
     let supplementPickAnimating = false;
 
-    deckArea.addEventListener('click', function handler(e) {
+    overlayArea.addEventListener('click', function handler(e) {
       const cardEl = e.target.closest('.floating-card:not(.picked)');
       if (!cardEl) return;
       if (supplementPickAnimating) return;
@@ -1244,24 +1354,23 @@ async function handleFollowUpDraw(count, container) {
       const idx = parseInt(cardEl.dataset.index, 10);
       picked.push(available[idx]);
 
-      // Animate card out
       if (animEngine) {
         animEngine.selectCard(cardEl, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
       }
 
-      // Update hint
       const remaining = count - picked.length;
-      if (hintEl) {
-        hintEl.textContent = remaining > 0 ? `还需选择 ${remaining} 张补充牌` : '选牌完成';
-      }
+      overlayHint.textContent = remaining > 0 ? `还需选择 ${remaining} 张补充牌` : '选牌完成';
 
       if (picked.length >= count) {
-        deckArea.removeEventListener('click', handler);
+        overlayArea.removeEventListener('click', handler);
         setTimeout(() => {
           if (animEngine) { animEngine.stop(); animEngine = null; }
-          deckArea.classList.remove('show');
-          deckArea.innerHTML = '';
-          dismissHint(true);
+          // Fade out overlay
+          overlay.classList.remove('show');
+          setTimeout(() => {
+            overlay.style.display = 'none';
+            overlayArea.innerHTML = '';
+          }, 400);
           resolve(picked);
         }, 800);
       }
@@ -1373,6 +1482,10 @@ function resetAll() {
   document.getElementById('drawBtn')?.classList.remove('hidden');
   document.getElementById('results')?.classList.remove('show');
   document.getElementById('deckArea')?.classList.remove('show');
+  // Clean up deck overlay
+  const deckOverlay = document.getElementById('deckOverlay');
+  if (deckOverlay) { deckOverlay.classList.remove('show'); deckOverlay.style.display = 'none'; }
+  document.getElementById('deckOverlayArea')?.replaceChildren();
   document.body.classList.remove('results-active');
 
   // Reset follow-up

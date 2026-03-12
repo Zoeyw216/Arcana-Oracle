@@ -1930,6 +1930,48 @@ body::before {
   pointer-events: none;
 }
 
+/* Supplementary draw overlay */
+.deck-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(30, 28, 25, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.deck-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+.deck-overlay-hint {
+  color: rgba(255, 253, 248, 0.8);
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1em;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.deck-overlay-area {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+}
+
+@media (max-width: 480px) {
+  .deck-overlay-area {
+    height: 50vh;
+  }
+  .deck-overlay-hint {
+    font-size: 0.9em;
+  }
+}
+
 /* Results action buttons */
 .results-actions {
   display: flex;
