@@ -1905,6 +1905,43 @@ body::before {
   transform: scale(1.03);
 }
 
+/* Follow-up mini card spread */
+.follow-up-spread {
+  margin: 20px 0;
+  text-align: center;
+}
+.follow-up-spread-hint {
+  font-size: 0.9em;
+  color: var(--gold-primary, #9b8b74);
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+.follow-up-spread-grid {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.follow-up-card {
+  width: 60px;
+  height: 96px;
+  border-radius: 6px;
+  border: 1px solid rgba(155, 139, 116, 0.25);
+  background: var(--card-back, #f5f0e8);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.follow-up-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(155, 139, 116, 0.2);
+}
+.follow-up-card.picked {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(155, 139, 116, 0.35);
+  border-color: var(--gold-primary, #9b8b74);
+  pointer-events: none;
+}
+
 /* Results action buttons */
 .results-actions {
   display: flex;

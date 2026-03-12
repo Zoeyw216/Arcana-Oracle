@@ -1172,26 +1172,82 @@ function showFollowUpDrawButton(count, container) {
 
 async function handleFollowUpDraw(count, container) {
   // Find undrawn cards from shuffled deck
-  const drawnIndices = new Set(drawnCards.map(c => c.id));
-  const available = shuffledDeck.filter(c => !drawnIndices.has(c.id));
+  const drawnIds = new Set(drawnCards.map(c => c.id));
+  const available = shuffledDeck.filter(c => !drawnIds.has(c.id));
 
   if (available.length < count) {
     container.insertAdjacentHTML('beforeend', '<p style="color:var(--text-secondary);font-style:italic;">牌堆中没有足够的牌了。</p>');
     return;
   }
 
-  // Pick random cards from available
-  const newCards = [];
-  const shuffled = shuffleArray([...available]);
-  for (let i = 0; i < count; i++) {
-    newCards.push(shuffled[i]);
-  }
+  // Disable follow-up input while picking
+  const input = document.getElementById('followUpInput');
+  const sendBtn = document.getElementById('followUpSend');
+  input.disabled = true;
+  sendBtn.disabled = true;
 
-  // Add to drawnCards for future reference
+  // Show mini card spread for user to pick from
+  const spreadEl = document.createElement('div');
+  spreadEl.className = 'follow-up-spread';
+  spreadEl.innerHTML = `<p class="follow-up-spread-hint">请选择 ${count} 张牌</p>`;
+
+  const cardsGrid = document.createElement('div');
+  cardsGrid.className = 'follow-up-spread-grid';
+
+  // Shuffle available cards and show a subset (max 9 for visual clarity)
+  const displayCards = shuffleArray([...available]).slice(0, Math.min(available.length, 9));
+  const backImgUrl = await getCardBackImageUrl();
+
+  displayCards.forEach((card) => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'follow-up-card';
+    if (backImgUrl) {
+      cardEl.style.backgroundImage = `url(${backImgUrl})`;
+      cardEl.style.backgroundSize = 'cover';
+    }
+    cardEl.dataset.cardId = card.id;
+    cardsGrid.appendChild(cardEl);
+  });
+
+  spreadEl.appendChild(cardsGrid);
+  container.appendChild(spreadEl);
+  requestAnimationFrame(() => spreadEl.scrollIntoView({ behavior: 'smooth', block: 'end' }));
+
+  // Wait for user to pick `count` cards
+  const newCards = await new Promise((resolve) => {
+    const picked = [];
+    cardsGrid.addEventListener('click', (e) => {
+      const cardEl = e.target.closest('.follow-up-card');
+      if (!cardEl || cardEl.classList.contains('picked')) return;
+
+      const cardId = parseInt(cardEl.dataset.cardId, 10);
+      const card = displayCards.find(c => c.id === cardId);
+      if (!card) return;
+
+      cardEl.classList.add('picked');
+      picked.push(card);
+
+      // Update hint
+      const remaining = count - picked.length;
+      const hint = spreadEl.querySelector('.follow-up-spread-hint');
+      if (remaining > 0) {
+        hint.textContent = `还需选择 ${remaining} 张牌`;
+      } else {
+        hint.textContent = '选牌完成';
+        // Short delay then resolve
+        setTimeout(() => resolve(picked), 500);
+      }
+    });
+  });
+
+  // Remove the spread
+  spreadEl.remove();
+
+  // Add to drawnCards
   drawnCards.push(...newCards);
 
-  // Show the new cards in the interpretation area
-  const cardsHtml = newCards.map((card, i) => {
+  // Show picked cards info
+  const cardsHtml = newCards.map(card => {
     const dir = card.isReversed ? '逆位' : '正位';
     return `「${card.name}」（${dir}）`;
   }).join('、');
@@ -1204,16 +1260,10 @@ async function handleFollowUpDraw(count, container) {
   // Add card info to conversation and stream new reading
   geminiReader.addCardInfo(newCards);
 
-  // Stream the supplementary reading
   const replyEl = document.createElement('div');
   replyEl.className = 'streaming-text';
   replyEl.innerHTML = '<span class="cursor-blink">|</span>';
   container.appendChild(replyEl);
-
-  const input = document.getElementById('followUpInput');
-  const sendBtn = document.getElementById('followUpSend');
-  input.disabled = true;
-  sendBtn.disabled = true;
 
   let fullText = '';
   let scrollPending = false;
