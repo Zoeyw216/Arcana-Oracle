@@ -1179,6 +1179,11 @@ body::before {
     justify-content: flex-start;
   }
 
+  body.results-active .results {
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
   /* Header — generous spacing below */
   .oracle-icon svg {
     width: 52px;
@@ -1777,27 +1782,7 @@ body::before {
 }
 
 /* Interpretation */
-.interpretation {
-  background: rgba(255, 253, 248, 0.75);
-  border: 1px solid rgba(155, 139, 116, 0.08);
-  border-radius: 16px;
-  padding: 32px 36px;
-  text-align: left;
-  max-width: 720px;
-  margin: 0 auto 24px;
-  line-height: 1.9;
-  color: var(--text-warm);
-  font-size: 0.93em;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.03);
-}
-.interpretation h3 {
-  text-align: center;
-  color: var(--text-warm, #566068);
-  font-size: 1.1em;
-  font-weight: 400;
-  letter-spacing: 5px;
-  margin-bottom: 16px;
-}
+/* Streaming text & interpretation helpers (interpretation base styles in earlier block) */
 .streaming-text { white-space: pre-wrap; }
 .streaming-text p { margin-bottom: 12px; }
 .cursor-blink { animation: typewriter 0.8s step-end infinite; color: var(--gold-primary); }
