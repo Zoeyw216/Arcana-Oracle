@@ -1186,62 +1186,87 @@ async function handleFollowUpDraw(count, container) {
   input.disabled = true;
   sendBtn.disabled = true;
 
-  // Show mini card spread for user to pick from
-  const spreadEl = document.createElement('div');
-  spreadEl.className = 'follow-up-spread';
-  spreadEl.innerHTML = `<p class="follow-up-spread-hint">请选择 ${count} 张牌</p>`;
+  // Show the full floating deck with remaining cards
+  const deckArea = document.getElementById('deckArea');
+  deckArea.innerHTML = '';
+  deckArea.classList.add('show');
 
-  const cardsGrid = document.createElement('div');
-  cardsGrid.className = 'follow-up-spread-grid';
+  // Show hint
+  showDeckHint(false);
+  const hintEl = document.getElementById('deckHint');
+  if (hintEl) hintEl.textContent = `请选择 ${count} 张补充牌`;
 
-  // Shuffle available cards and show a subset (max 9 for visual clarity)
-  const displayCards = shuffleArray([...available]).slice(0, Math.min(available.length, 9));
+  // Create animation engine for the supplementary draw
+  animEngine = new AnimationEngine(deckArea);
   const backImgUrl = await getCardBackImageUrl();
 
-  displayCards.forEach((card) => {
+  // Re-index available cards for the orbit
+  const cardCount = available.length;
+  for (let i = 0; i < cardCount; i++) {
     const cardEl = document.createElement('div');
-    cardEl.className = 'follow-up-card';
+    cardEl.className = 'floating-card';
+    cardEl.dataset.index = i;
+
     if (backImgUrl) {
       cardEl.style.backgroundImage = `url(${backImgUrl})`;
       cardEl.style.backgroundSize = 'cover';
+      cardEl.style.borderRadius = getComputedStyle(cardEl).borderRadius;
+    } else {
+      renderCardBack(cardEl);
     }
-    cardEl.dataset.cardId = card.id;
-    cardsGrid.appendChild(cardEl);
-  });
 
-  spreadEl.appendChild(cardsGrid);
-  container.appendChild(spreadEl);
-  requestAnimationFrame(() => spreadEl.scrollIntoView({ behavior: 'smooth', block: 'end' }));
+    deckArea.appendChild(cardEl);
+    animEngine.addCard(cardEl, i, cardCount);
+  }
 
-  // Wait for user to pick `count` cards
+  animEngine.enableDrag();
+  animEngine.start();
+
+  // Scroll to deck
+  requestAnimationFrame(() => deckArea.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+
+  // Wait for user to pick `count` cards via click
   const newCards = await new Promise((resolve) => {
     const picked = [];
-    cardsGrid.addEventListener('click', (e) => {
-      const cardEl = e.target.closest('.follow-up-card');
-      if (!cardEl || cardEl.classList.contains('picked')) return;
+    let supplementPickAnimating = false;
 
-      const cardId = parseInt(cardEl.dataset.cardId, 10);
-      const card = displayCards.find(c => c.id === cardId);
-      if (!card) return;
+    deckArea.addEventListener('click', function handler(e) {
+      const cardEl = e.target.closest('.floating-card:not(.picked)');
+      if (!cardEl) return;
+      if (supplementPickAnimating) return;
+      supplementPickAnimating = true;
+      setTimeout(() => { supplementPickAnimating = false; }, 800);
 
       cardEl.classList.add('picked');
-      picked.push(card);
+      cardEl.style.pointerEvents = 'none';
+      cardEl.style.zIndex = '999';
+
+      const idx = parseInt(cardEl.dataset.index, 10);
+      picked.push(available[idx]);
+
+      // Animate card out
+      if (animEngine) {
+        animEngine.selectCard(cardEl, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+      }
 
       // Update hint
       const remaining = count - picked.length;
-      const hint = spreadEl.querySelector('.follow-up-spread-hint');
-      if (remaining > 0) {
-        hint.textContent = `还需选择 ${remaining} 张牌`;
-      } else {
-        hint.textContent = '选牌完成';
-        // Short delay then resolve
-        setTimeout(() => resolve(picked), 500);
+      if (hintEl) {
+        hintEl.textContent = remaining > 0 ? `还需选择 ${remaining} 张补充牌` : '选牌完成';
+      }
+
+      if (picked.length >= count) {
+        deckArea.removeEventListener('click', handler);
+        setTimeout(() => {
+          if (animEngine) { animEngine.stop(); animEngine = null; }
+          deckArea.classList.remove('show');
+          deckArea.innerHTML = '';
+          dismissHint(true);
+          resolve(picked);
+        }, 800);
       }
     });
   });
-
-  // Remove the spread
-  spreadEl.remove();
 
   // Add to drawnCards
   drawnCards.push(...newCards);
