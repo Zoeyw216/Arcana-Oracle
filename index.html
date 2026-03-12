@@ -75,6 +75,19 @@
     <div class="results-title" id="resultsTitle"></div>
     <div class="cards-row" id="cardsRow"></div>
     <div class="interpretation" id="interpretation"></div>
+    <!-- Follow-up question -->
+    <div class="follow-up" id="followUp" style="display:none">
+      <div class="follow-up-input-row">
+        <input type="text" id="followUpInput" placeholder="继续追问占卜师..." maxlength="200">
+        <button id="followUpSend" class="follow-up-send-btn" aria-label="发送">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <div class="results-actions">
       <button class="action-btn" id="generateImageBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

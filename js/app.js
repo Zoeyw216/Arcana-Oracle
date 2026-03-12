@@ -1049,11 +1049,200 @@ async function generateInterpretation(question, container) {
     onComplete: () => {
       textEl.innerHTML = formatText(fullText);
       container.querySelector('h3').textContent = '解读';
+      // Show follow-up input
+      showFollowUpInput();
     },
     onError: (err) => {
       console.error('Gemini API error:', err);
       container.innerHTML = '<h3>解读</h3>' +
         GeminiReader.getStaticReading(drawnCards, question, selectedSpread);
+      // No follow-up for static fallback
+    }
+  });
+}
+
+// === Follow-up Questions ===
+let followUpBound = false;
+
+function showFollowUpInput() {
+  const followUp = document.getElementById('followUp');
+  if (!followUp) return;
+  followUp.style.display = '';
+
+  if (!followUpBound) {
+    followUpBound = true;
+    const input = document.getElementById('followUpInput');
+    const sendBtn = document.getElementById('followUpSend');
+
+    const doSend = () => {
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = '';
+      sendFollowUp(msg);
+    };
+
+    sendBtn.addEventListener('click', doSend);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing) doSend();
+    });
+  }
+}
+
+async function sendFollowUp(message) {
+  const container = document.getElementById('interpretation');
+  const followUp = document.getElementById('followUp');
+  if (!container) return;
+
+  // Disable input while streaming
+  const input = document.getElementById('followUpInput');
+  const sendBtn = document.getElementById('followUpSend');
+  input.disabled = true;
+  sendBtn.disabled = true;
+
+  // Append divider + user question
+  const divider = document.createElement('div');
+  divider.className = 'follow-up-divider';
+  container.appendChild(divider);
+
+  const questionEl = document.createElement('div');
+  questionEl.className = 'follow-up-question';
+  questionEl.textContent = message;
+  container.appendChild(questionEl);
+
+  // Append streaming response area
+  const replyEl = document.createElement('div');
+  replyEl.className = 'streaming-text';
+  replyEl.innerHTML = '<span class="cursor-blink">|</span>';
+  container.appendChild(replyEl);
+
+  let fullText = '';
+  let scrollPending = false;
+
+  await geminiReader.followUp({
+    message,
+    onToken: (token) => {
+      fullText += token;
+      replyEl.innerHTML = formatText(fullText) + '<span class="cursor-blink">|</span>';
+      if (!scrollPending) {
+        scrollPending = true;
+        requestAnimationFrame(() => {
+          replyEl.scrollIntoView({ behavior: 'instant', block: 'end' });
+          scrollPending = false;
+        });
+      }
+    },
+    onComplete: () => {
+      // Check for [DRAW:N] marker
+      const drawMatch = fullText.match(/\[DRAW:(\d+)\]\s*$/);
+      const cleanText = fullText.replace(/\[DRAW:\d+\]\s*$/, '').trim();
+      replyEl.innerHTML = formatText(cleanText);
+
+      if (drawMatch) {
+        const drawCount = Math.min(parseInt(drawMatch[1], 10), 2);
+        showFollowUpDrawButton(drawCount, container);
+      }
+
+      // Re-enable input
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    },
+    onError: (err) => {
+      console.error('Follow-up error:', err);
+      replyEl.innerHTML = '<p style="color:var(--text-secondary);font-style:italic;">追问失败，请稍后再试。</p>';
+      input.disabled = false;
+      sendBtn.disabled = false;
+    }
+  });
+}
+
+function showFollowUpDrawButton(count, container) {
+  const btn = document.createElement('button');
+  btn.className = 'follow-up-draw-btn';
+  btn.textContent = `抽${count}张补充牌`;
+  btn.addEventListener('click', () => {
+    btn.remove();
+    handleFollowUpDraw(count, container);
+  });
+  container.appendChild(btn);
+
+  // Scroll to the button
+  requestAnimationFrame(() => btn.scrollIntoView({ behavior: 'smooth', block: 'end' }));
+}
+
+async function handleFollowUpDraw(count, container) {
+  // Find undrawn cards from shuffled deck
+  const drawnIndices = new Set(drawnCards.map(c => c.id));
+  const available = shuffledDeck.filter(c => !drawnIndices.has(c.id));
+
+  if (available.length < count) {
+    container.insertAdjacentHTML('beforeend', '<p style="color:var(--text-secondary);font-style:italic;">牌堆中没有足够的牌了。</p>');
+    return;
+  }
+
+  // Pick random cards from available
+  const newCards = [];
+  const shuffled = shuffleArray([...available]);
+  for (let i = 0; i < count; i++) {
+    newCards.push(shuffled[i]);
+  }
+
+  // Add to drawnCards for future reference
+  drawnCards.push(...newCards);
+
+  // Show the new cards in the interpretation area
+  const cardsHtml = newCards.map((card, i) => {
+    const dir = card.isReversed ? '逆位' : '正位';
+    return `「${card.name}」（${dir}）`;
+  }).join('、');
+
+  const cardInfoEl = document.createElement('div');
+  cardInfoEl.className = 'follow-up-new-cards';
+  cardInfoEl.innerHTML = `<p>你抽到了补充牌：${cardsHtml}</p>`;
+  container.appendChild(cardInfoEl);
+
+  // Add card info to conversation and stream new reading
+  geminiReader.addCardInfo(newCards);
+
+  // Stream the supplementary reading
+  const replyEl = document.createElement('div');
+  replyEl.className = 'streaming-text';
+  replyEl.innerHTML = '<span class="cursor-blink">|</span>';
+  container.appendChild(replyEl);
+
+  const input = document.getElementById('followUpInput');
+  const sendBtn = document.getElementById('followUpSend');
+  input.disabled = true;
+  sendBtn.disabled = true;
+
+  let fullText = '';
+  let scrollPending = false;
+
+  await geminiReader.followUp({
+    message: `请结合补充牌继续解读。`,
+    onToken: (token) => {
+      fullText += token;
+      replyEl.innerHTML = formatText(fullText) + '<span class="cursor-blink">|</span>';
+      if (!scrollPending) {
+        scrollPending = true;
+        requestAnimationFrame(() => {
+          replyEl.scrollIntoView({ behavior: 'instant', block: 'end' });
+          scrollPending = false;
+        });
+      }
+    },
+    onComplete: () => {
+      const cleanText = fullText.replace(/\[DRAW:\d+\]\s*$/, '').trim();
+      replyEl.innerHTML = formatText(cleanText);
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    },
+    onError: (err) => {
+      console.error('Supplementary reading error:', err);
+      replyEl.innerHTML = '<p style="color:var(--text-secondary);font-style:italic;">补充解读失败，请稍后再试。</p>';
+      input.disabled = false;
+      sendBtn.disabled = false;
     }
   });
 }
@@ -1110,6 +1299,16 @@ function resetAll() {
   document.getElementById('results')?.classList.remove('show');
   document.getElementById('deckArea')?.classList.remove('show');
   document.body.classList.remove('results-active');
+
+  // Reset follow-up
+  const followUpEl = document.getElementById('followUp');
+  if (followUpEl) followUpEl.style.display = 'none';
+  const followUpInput = document.getElementById('followUpInput');
+  if (followUpInput) { followUpInput.value = ''; followUpInput.disabled = false; }
+  const followUpSend = document.getElementById('followUpSend');
+  if (followUpSend) followUpSend.disabled = false;
+  geminiReader.conversationHistory = [];
+
   dismissHint(true); // force — full reset
 
   const input = document.getElementById('questionInput');

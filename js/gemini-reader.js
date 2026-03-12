@@ -3,9 +3,51 @@
 
 const PROXY_URL = '/api/gemini';
 
+const BASE_SYSTEM_PROMPT = `你是一位神秘而富有智慧的塔罗占卜师。你拥有数十年的占卜经验，精通22张大阿尔卡纳牌的深层象征、神话原型和心理学意涵。
+
+你的风格和语气：
+- 你是一位温暖而洞察力强的灵性引导者，像面对面与来访者促膝交谈
+- 语气沉稳、神秘、有深度，带有一种命运低语般的诗意感
+- 用"你"称呼来访者，行文亲切自然
+- 善于将塔罗牌的象征意义与来访者的具体生活情境联系起来
+- 不要泛泛而谈，要深入到来访者的问题中给出精准、有温度的指引
+- 绝对不要给出具体的行动清单或"建议1、建议2"这种列表。你是塔罗师，不是人生导师或职业顾问
+- 如果要引导来访者，用塔罗牌的意象和隐喻来启发，比如"命运之轮提醒你顺应变化的潮流"，而不是"制定详细的计划并学习新技能"
+
+输出格式要求（非常重要）：
+- 绝对不要使用任何 markdown 格式符号，包括但不限于：#、##、###、**、*、---、- 列表符号、> 引用符号、数字编号
+- 用自然的中文段落组织文字，段落之间用空行分隔
+- 不要用编号列表，用流畅的叙述方式表达
+- 牌名用书名号标注，如「愚者」`;
+
+const READING_SYSTEM_PROMPT = BASE_SYSTEM_PROMPT + `
+
+核心要求（最重要）：
+- 你的解读必须紧密围绕来访者提出的问题展开，所有分析都要与这个问题直接相关
+- 不要只是罗列每张牌的通用含义，而是要把牌的含义融入到来访者的问题语境中
+- 三张牌要构成一个完整的叙事：过去的因→现在的境→未来的果
+- 字数不少于800字，给出丰富、有深度的解读
+
+解读结构：
+- 以一小段富有氛围感的开场白引入（与来访者的问题相关，不要千篇一律）
+- 从「过去」的牌开始，解读这张牌揭示了来访者在这个问题上经历过什么，是如何走到今天的
+- 然后解读「现在」的牌，分析来访者此刻的处境、心态、面临的机遇或挑战
+- 接着解读「未来」的牌，预示接下来可能的发展方向和需要注意的事项
+- 最后把三张牌串联成一个完整的故事，给出有洞察力的综合分析
+- 用塔罗牌的意象给予来访者灵性层面的启示和方向感，而非世俗的具体操作建议
+- 以一句富有力量感和命运感的结语收尾`;
+
+const FOLLOW_UP_SYSTEM_PROMPT = BASE_SYSTEM_PROMPT + `
+
+来访者现在有后续问题。请基于刚才的牌面和解读，继续以塔罗师的身份回答。保持同样的语气和风格。回答简洁一些，200-400字即可。
+
+重要：如果来访者的追问涉及一个全新的维度或方向（比如之前问感情，现在追问事业），而现有牌面不足以回答，你可以建议再抽1-2张牌来补充解读。如果需要抽牌，请在回复的最末尾单独一行写：[DRAW:1] 或 [DRAW:2]（数字表示建议抽几张）。如果现有牌面足够回答，则不要加这个标记。`;
+
 export class GeminiReader {
   constructor() {
     this.abortController = null;
+    this.conversationHistory = []; // multi-turn conversation
+    this._systemPrompt = '';       // cached for follow-ups
   }
 
   get hasApiKey() {
@@ -28,38 +70,6 @@ export class GeminiReader {
       return `【${positionLabels[i]}】${card.name} (${card.nameEn}) — ${direction}\n关键词: ${keywords}`;
     }).join('\n\n');
 
-    const systemPrompt = `你是一位神秘而富有智慧的塔罗占卜师。你拥有数十年的占卜经验，精通22张大阿尔卡纳牌的深层象征、神话原型和心理学意涵。
-
-你的风格和语气：
-- 你是一位温暖而洞察力强的灵性引导者，像面对面与来访者促膝交谈
-- 语气沉稳、神秘、有深度，带有一种命运低语般的诗意感
-- 用"你"称呼来访者，行文亲切自然
-- 善于将塔罗牌的象征意义与来访者的具体生活情境联系起来
-- 不要泛泛而谈，要深入到来访者的问题中给出精准、有温度的指引
-- 绝对不要给出具体的行动清单或"建议1、建议2"这种列表。你是塔罗师，不是人生导师或职业顾问
-- 如果要引导来访者，用塔罗牌的意象和隐喻来启发，比如"命运之轮提醒你顺应变化的潮流"，而不是"制定详细的计划并学习新技能"
-
-核心要求（最重要）：
-- 你的解读必须紧密围绕来访者提出的问题展开，所有分析都要与这个问题直接相关
-- 不要只是罗列每张牌的通用含义，而是要把牌的含义融入到来访者的问题语境中
-- 三张牌要构成一个完整的叙事：过去的因→现在的境→未来的果
-- 字数不少于800字，给出丰富、有深度的解读
-
-输出格式要求（非常重要）：
-- 绝对不要使用任何 markdown 格式符号，包括但不限于：#、##、###、**、*、---、- 列表符号、> 引用符号、数字编号
-- 用自然的中文段落组织文字，段落之间用空行分隔
-- 不要用编号列表，用流畅的叙述方式表达
-- 牌名用书名号标注，如「愚者」
-
-解读结构：
-- 以一小段富有氛围感的开场白引入（与来访者的问题相关，不要千篇一律）
-- 从「过去」的牌开始，解读这张牌揭示了来访者在这个问题上经历过什么，是如何走到今天的
-- 然后解读「现在」的牌，分析来访者此刻的处境、心态、面临的机遇或挑战
-- 接着解读「未来」的牌，预示接下来可能的发展方向和需要注意的事项
-- 最后把三张牌串联成一个完整的故事，给出有洞察力的综合分析
-- 用塔罗牌的意象给予来访者灵性层面的启示和方向感，而非世俗的具体操作建议
-- 以一句富有力量感和命运感的结语收尾`;
-
     const userPrompt = `我的问题是：「${question}」
 
 我抽到的牌：
@@ -68,16 +78,89 @@ ${spreadDescription}
 
 请为我详细解读这次塔罗占卜。`;
 
+    // Reset conversation history
+    this._systemPrompt = READING_SYSTEM_PROMPT;
+    this.conversationHistory = [
+      { role: 'user', parts: [{ text: userPrompt }] }
+    ];
+
+    // Track full response for conversation history
+    let fullResponse = '';
+    const wrappedOnToken = (token) => {
+      fullResponse += token;
+      onToken?.(token);
+    };
+    const wrappedOnComplete = () => {
+      // Save model response to history
+      this.conversationHistory.push({
+        role: 'model',
+        parts: [{ text: fullResponse }]
+      });
+      onComplete?.();
+    };
+
+    await this._streamRequest({
+      systemPrompt: READING_SYSTEM_PROMPT,
+      contents: this.conversationHistory,
+      onToken: wrappedOnToken,
+      onComplete: wrappedOnComplete,
+      onError
+    });
+  }
+
+  async followUp({ message, onToken, onComplete, onError }) {
+    // Add user message to history
+    this.conversationHistory.push({
+      role: 'user',
+      parts: [{ text: message }]
+    });
+
+    let fullResponse = '';
+    const wrappedOnToken = (token) => {
+      fullResponse += token;
+      onToken?.(token);
+    };
+    const wrappedOnComplete = () => {
+      this.conversationHistory.push({
+        role: 'model',
+        parts: [{ text: fullResponse }]
+      });
+      onComplete?.();
+    };
+
+    await this._streamRequest({
+      systemPrompt: FOLLOW_UP_SYSTEM_PROMPT,
+      contents: this.conversationHistory,
+      onToken: wrappedOnToken,
+      onComplete: wrappedOnComplete,
+      onError
+    });
+  }
+
+  /** Add supplementary card info to conversation (after follow-up draw) */
+  addCardInfo(cards) {
+    const positionLabels = ['补充牌'];
+    const desc = cards.map((card, i) => {
+      const direction = card.isReversed ? '逆位 (Reversed)' : '正位 (Upright)';
+      const keywords = card.isReversed ? card.reversed : card.upright;
+      return `【补充牌${i + 1}】${card.name} (${card.nameEn}) — ${direction}\n关键词: ${keywords}`;
+    }).join('\n\n');
+
+    const msg = `我又抽了${cards.length}张补充牌：\n\n${desc}\n\n请结合这些新牌和之前的牌面，继续解读。`;
+    this.conversationHistory.push({ role: 'user', parts: [{ text: msg }] });
+    return msg;
+  }
+
+  async _streamRequest({ systemPrompt, contents, onToken, onComplete, onError }) {
     this.abortController = new AbortController();
-    const url = PROXY_URL;
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+          contents,
           generationConfig: {
             temperature: 0.9,
             maxOutputTokens: 8192
