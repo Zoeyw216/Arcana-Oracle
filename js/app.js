@@ -1088,8 +1088,25 @@ function closeImagePreview() {
   setTimeout(() => { overlay.classList.remove('show'); }, 350);
 }
 
-function downloadImage() {
+async function downloadImage() {
   if (!generatedImageDataUrl) return;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  // Mobile: use Web Share API to let user save to photos
+  if (isMobile && navigator.share) {
+    try {
+      const blob = await (await fetch(generatedImageDataUrl)).blob();
+      const file = new File([blob], 'arcana-oracle.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+        return;
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') return; // user cancelled
+    }
+  }
+
+  // Desktop fallback: trigger download
   const link = document.createElement('a');
   link.download = `arcana-oracle-${Date.now()}.png`;
   link.href = generatedImageDataUrl;
