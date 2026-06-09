@@ -237,14 +237,13 @@ ${spreadDescription}
 
           try {
             const data = JSON.parse(dataStr);
-            const parts = data.candidates?.[0]?.content?.parts;
-            if (parts) {
-              for (const part of parts) {
-                if (part.text) onToken?.(part.text);
-              }
+
+            // DeepSeek/OpenAI SSE format
+            const delta = data.choices?.[0]?.delta;
+            if (delta?.content) {
+              onToken?.(delta.content);
             }
-            // Any finishReason means the stream is done
-            const finishReason = data.candidates?.[0]?.finishReason;
+            const finishReason = data.choices?.[0]?.finish_reason;
             if (finishReason) {
               onComplete?.();
               return;
