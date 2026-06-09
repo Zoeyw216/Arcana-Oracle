@@ -1,7 +1,8 @@
-// Gemini Flash API integration for tarot card readings
-// Streaming via SSE (alt=sse)
+// DeepSeek API integration for tarot card readings
+// With RAG: retrieves relevant card knowledge before generating
 
 const PROXY_URL = '/api/gemini';
+const RAG_URL = '/api/rag-retrieve';
 
 const BASE_SYSTEM_PROMPT = `你是一位神秘而富有智慧的塔罗占卜师。你拥有数十年的占卜经验，精通22张大阿尔卡纳牌的深层象征、神话原型和心理学意涵。
 
@@ -24,6 +25,7 @@ const READING_SYSTEM_PROMPT = BASE_SYSTEM_PROMPT + `
 
 核心要求（最重要）：
 - 你的解读必须紧密围绕来访者提出的问题展开，所有分析都要与这个问题直接相关
+- 如果消息中包含【参考知识库】的内容，请深入参考这些专业牌义资料来丰富你的解读，但不要直接照搬原文，而是用你自己的语言和风格重新诠释
 - 不要只是罗列每张牌的通用含义，而是要把牌的含义融入到来访者的问题语境中
 - 三张牌要构成一个完整的叙事：过去的因→现在的境→未来的果
 - 字数不少于800字，给出丰富、有深度的解读
@@ -84,11 +86,35 @@ export class GeminiReader {
       return `【${positionLabels[i]}】${card.name} (${card.nameEn}) — ${direction}\n关键词: ${keywords}`;
     }).join('\n\n');
 
+    // RAG: retrieve relevant card knowledge
+    let ragContext = '';
+    try {
+      const cardIds = cards.map(c => c.id);
+      const ragQuery = `${question} ${cards.map(c => c.name + (c.isReversed ? '逆位' : '正位')).join(' ')}`;
+      const ragRes = await fetch(RAG_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: ragQuery, cardIds })
+      });
+      if (ragRes.ok) {
+        const ragData = await ragRes.json();
+        if (ragData.results?.length) {
+          ragContext = '\n\n【参考知识库 - 专业塔罗牌义资料】\n' +
+            ragData.results.map(r =>
+              `[${r.card_name} - ${r.topic}] ${r.text}`
+            ).join('\n\n');
+        }
+      }
+    } catch (e) {
+      console.warn('RAG retrieval failed, proceeding without:', e);
+    }
+
     const userPrompt = `我的问题是：「${question}」
 
 我抽到的牌：
 
 ${spreadDescription}
+${ragContext}
 
 请为我详细解读这次塔罗占卜。`;
 
